@@ -48,8 +48,10 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         int idx = get_random_idx();
 
         Item item = q[idx];
-        q[idx] = null;
         count--;
+
+        q[idx] = q[count];  // fill the old idx with the last element
+        q[count] = null;    // change the last element to null
 
         if (count > 0 && count == q.length / 4) resize(q.length / 2);
 
@@ -68,13 +70,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
 
     // return a valid random idx (one that has not already been removed)
     private int get_random_idx() {
-        int idx;
-
-        idx = StdRandom.uniform(q.length);
-        while (q[idx] == null) {
-            idx = StdRandom.uniform(q.length);
-        }
-        return idx;
+        return StdRandom.uniform(count);
     }
 
     // resize the arrays (Item[] and removed[])
@@ -82,11 +78,8 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         Item[] copy_q = (Item[]) new Object[capacity];
 
         int copy_count = 0;
-        for (int i = 0; i < q.length; i++) {
-            if (q[i] != null) {  // ignore array elements that have been removed!
-                copy_q[copy_count] = q[i];
-                copy_count++;
-            }
+        for (int i = 0; i < count; i++) {
+            copy_q[i] = q[i];
         }
         // update pointer
         q = copy_q;
@@ -106,12 +99,8 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
             idx_into_random_idx_array = 0;
 
             // generate list of valid idxs
-            int idx_count = 0;
-            for (int i = 0; i < q.length; i++) {
-                if (q[i] != null) {
-                    random_idx_array[idx_count] = i;
-                    idx_count++;
-                }
+            for (int i = 0; i < count; i++) {
+                random_idx_array[i] = i;
             }
             // make that list of idxs random
             StdRandom.shuffle(random_idx_array);

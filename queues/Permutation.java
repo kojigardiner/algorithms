@@ -15,6 +15,10 @@ public class Permutation {
         }
 
         int k = Integer.parseInt(args[0]);
+        if (k == 0) {
+            return;
+        }
+
         RandomizedQueue<String> q = new RandomizedQueue<String>();
 
         int count = 0;
@@ -27,7 +31,7 @@ public class Permutation {
                 q.enqueue(s);
             }
             else {
-                if (StdRandom.bernoulli((double) k / count)) {
+                if (StdRandom.bernoulli((double) k / (count + 1))) {
                     q.dequeue();
                     q.enqueue(s);
                 }

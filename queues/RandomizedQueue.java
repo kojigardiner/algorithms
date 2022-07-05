@@ -118,7 +118,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         }
 
         public boolean hasNext() {
-            return (idx_into_random_idx_array != random_idx_array.length);
+            return (idx_into_random_idx_array < random_idx_array.length);
         }
 
         public void remove() {
@@ -126,7 +126,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         }
 
         public Item next() {
-            if (isEmpty()) {
+            if (isEmpty() || idx_into_random_idx_array >= random_idx_array.length) {
                 throw new NoSuchElementException("Queue is empty");
             }
             return q[random_idx_array[idx_into_random_idx_array++]];

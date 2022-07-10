@@ -9,30 +9,27 @@ public class BruteCollinearPoints {
     private static final int SEG_LENGTH = 4;
 
     private ArrayList<LineSegment> segments;
+    private Point[] my_points;
 
     public BruteCollinearPoints(Point[] points) {   // finds all line segments containing 4 points
         if (points == null) {
             throw new IllegalArgumentException("points cannot be null");
         }
-        Arrays.sort(points, 0, points.length);
+        my_points = Arrays.copyOf(points, points.length);
+        Arrays.sort(my_points, 0, my_points.length);
 
         segments = new ArrayList<LineSegment>();
 
-        for (int i = 0; i <= (points.length - SEG_LENGTH); i++) {
-            for (int j = i + 1; j <= (points.length - SEG_LENGTH + 1); j++) {
-                for (int k = j + 1; k <= (points.length - SEG_LENGTH + 2); k++) {
-                    for (int m = k + 1; m <= (points.length - SEG_LENGTH + 3); m++) {
-                        Point p = points[i];
-                        Point q = points[j];
-                        Point r = points[k];
-                        Point s = points[m];
+        for (int i = 0; i <= (my_points.length - SEG_LENGTH); i++) {
+            for (int j = i + 1; j <= (my_points.length - SEG_LENGTH + 1); j++) {
+                for (int k = j + 1; k <= (my_points.length - SEG_LENGTH + 2); k++) {
+                    for (int m = k + 1; m <= (my_points.length - SEG_LENGTH + 3); m++) {
+                        Point p = my_points[i];
+                        Point q = my_points[j];
+                        Point r = my_points[k];
+                        Point s = my_points[m];
 
-                        if (p == q || p == r || p == s || q == r || q == s || r == s) {
-                            throw new IllegalArgumentException("equal points detected");
-                        }
-                        if (p == null || q == null || r == null || s == null) {
-                            throw new IllegalArgumentException("null point detected");
-                        }
+                        check_nulls_and_dupes(p, q, r, s);
 
                         //                        StdOut.println(p + "->" + q + "->" + r + "->" + s);
                         //                        StdOut.println(p.slopeTo(q) + "/" + p.slopeTo(r) + "/" + p.slopeTo(s));
@@ -43,6 +40,20 @@ public class BruteCollinearPoints {
                     }
                 }
             }
+        }
+    }
+
+    // check if there are any nulls or duplicates within a set of 4 points
+    private void check_nulls_and_dupes(Point p1, Point p2, Point p3, Point p4) {
+        if (p1 == null || p2 == null || p3 == null || p4 == null) {
+            throw new IllegalArgumentException("null point detected");
+        }
+
+        if (p1.compareTo(p2) == 0 || p1.compareTo(p3) == 0 || p1.compareTo(p4) == 0
+                || p2.compareTo(p3) == 0
+                || p2.compareTo(p4) == 0
+                || p3.compareTo(p4) == 0) {
+            throw new IllegalArgumentException("duplicate point detected");
         }
     }
 

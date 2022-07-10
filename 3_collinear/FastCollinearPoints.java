@@ -9,26 +9,54 @@ public class FastCollinearPoints {
     private static final int SEG_LENGTH = 4;
 
     private ArrayList<LineSegment> segments;
+    private Point[] my_points;
 
     public FastCollinearPoints(
             Point[] points) {     // finds all line segments containing 4 or more points
         if (points == null) {
             throw new IllegalArgumentException("points cannot be null");
         }
-        Arrays.sort(points, 0, points.length);
+        my_points = Arrays.copyOf(points, points.length);
+        Arrays.sort(my_points, 0, my_points.length);
         segments = new ArrayList<LineSegment>();
 
-        for (int i = 0; i < points.length - 1; i++) {
-            Point p = points[i];
-            Arrays.sort(points, i + 1, points.length, p.slopeOrder());
+        for (int i = 0; i < my_points.length - 1; i++) {
+            Point p = my_points[i];
 
-            for (int j = i + 1; j <= points.length - SEG_LENGTH + 1; j++) {
-                if (p.slopeTo(points[j]) == p.slopeTo(points[j + 1])
-                        && p.slopeTo(points[j]) == p.slopeTo(points[j + 2])) {
+            if (p == null) {
+                throw new IllegalArgumentException("null point detected");
+            }
+
+            // start at i+1 to skip comparison with self
+            Arrays.sort(my_points, i + 1, my_points.length, p.slopeOrder());
+
+            for (int j = i + 1; j <= my_points.length - SEG_LENGTH + 1; j++) {
+                Point q1 = my_points[j];
+                Point q2 = my_points[j + 1];
+                Point q3 = my_points[j + 2];
+
+                check_nulls_and_dupes(p, q1, q2, q3);
+
+                if (p.slopeTo(q1) == p.slopeTo(q2)
+                        && p.slopeTo(q1) == p.slopeTo(q3)) {
                     // assumes the initial sort and this sort are stable
-                    segments.add(new LineSegment(p, points[j + 2]));
+                    segments.add(new LineSegment(p, q3));
                 }
             }
+        }
+    }
+
+    // check if there are any nulls or duplicates within a set of 4 points
+    private void check_nulls_and_dupes(Point p1, Point p2, Point p3, Point p4) {
+        if (p1 == null || p2 == null || p3 == null || p4 == null) {
+            throw new IllegalArgumentException("null point detected");
+        }
+
+        if (p1.compareTo(p2) == 0 || p1.compareTo(p3) == 0 || p1.compareTo(p4) == 0
+                || p2.compareTo(p3) == 0
+                || p2.compareTo(p4) == 0
+                || p3.compareTo(p4) == 0) {
+            throw new IllegalArgumentException("duplicate point detected");
         }
     }
 

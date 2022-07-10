@@ -145,10 +145,10 @@ public class Point implements Comparable<Point> {
                 ret = 0;
             }
             else if (slope1 < slope2) {
-                ret = +1;
+                ret = -1;
             }
             else {
-                ret = -1;
+                ret = +1;
             }
 
             return ret;

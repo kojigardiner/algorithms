@@ -15,14 +15,9 @@ public class BruteCollinearPoints {
         if (points == null) {
             throw new IllegalArgumentException("points cannot be null");
         }
-        my_points = new Point[points.length];
-        for (int i = 0; i < points.length; i++) {
-            if (points[i] == null) {
-                throw new IllegalArgumentException("null point detected");
-            }
-            my_points[i] = points[i];
-        }
+        my_points = dupe_array_and_check_nulls(points);
         Arrays.sort(my_points, 0, my_points.length);
+        check_dupes(my_points);
 
         segments = new ArrayList<LineSegment>();
 
@@ -34,8 +29,6 @@ public class BruteCollinearPoints {
                         Point q = my_points[j];
                         Point r = my_points[k];
                         Point s = my_points[m];
-
-                        check_nulls_and_dupes(p, q, r, s);
 
                         //                        StdOut.println(p + "->" + q + "->" + r + "->" + s);
                         //                        StdOut.println(p.slopeTo(q) + "/" + p.slopeTo(r) + "/" + p.slopeTo(s));
@@ -49,17 +42,24 @@ public class BruteCollinearPoints {
         }
     }
 
-    // check if there are any nulls or duplicates within a set of 4 points
-    private void check_nulls_and_dupes(Point p1, Point p2, Point p3, Point p4) {
-        if (p1 == null || p2 == null || p3 == null || p4 == null) {
-            throw new IllegalArgumentException("null point detected");
+    // duplicate an array and check all elements for nulls
+    private Point[] dupe_array_and_check_nulls(Point[] points) {
+        Point[] dupe = new Point[points.length];
+        for (int i = 0; i < points.length; i++) {
+            if (points[i] == null) {
+                throw new IllegalArgumentException("null point detected");
+            }
+            dupe[i] = points[i];
         }
+        return dupe;
+    }
 
-        if (p1.compareTo(p2) == 0 || p1.compareTo(p3) == 0 || p1.compareTo(p4) == 0
-                || p2.compareTo(p3) == 0
-                || p2.compareTo(p4) == 0
-                || p3.compareTo(p4) == 0) {
-            throw new IllegalArgumentException("duplicate point detected");
+    // check if there are any duplicate points. assumes points have been sorted.
+    private void check_dupes(Point[] sorted_points) {
+        for (int i = 1; i < sorted_points.length; i++) {
+            if (sorted_points[i - 1].compareTo(sorted_points[i]) == 0) {
+                throw new IllegalArgumentException("duplicate point detected");
+            }
         }
     }
 

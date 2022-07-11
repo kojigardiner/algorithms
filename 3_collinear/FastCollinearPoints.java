@@ -10,7 +10,7 @@ public class FastCollinearPoints {
     private static final boolean DEBUG = false;
 
     private ArrayList<LineSegment> segments;
-    private Point[] my_points;
+    private Point[] my_points_natural, my_points_slope;
 
     public FastCollinearPoints(
             Point[] points) {     // finds all line segments containing 4 or more points
@@ -19,77 +19,84 @@ public class FastCollinearPoints {
         }
 
         // create a new array that we will modify, checking for nulls as we go
-        my_points = new Point[points.length];
-        for (int i = 0; i < points.length; i++) {
-            if (points[i] == null) {
-                throw new IllegalArgumentException("null point detected");
-            }
-            my_points[i] = points[i];
-        }
-        Arrays.sort(my_points, 0, my_points.length);    // sort by natural order
+        my_points_natural = dupe_array_and_check_nulls(points);
+        my_points_slope = Arrays.copyOf(my_points_natural, my_points_natural.length);
+        Arrays.sort(my_points_natural, 0, my_points_natural.length);    // sort by natural order
+        check_dupes(my_points_natural);
 
         segments = new ArrayList<LineSegment>();        // storage for segments
         ArrayList<Point> seg_points = new ArrayList<Point>();   // temp storage for seg creation
 
-        for (int i = 0; i < my_points.length - 1; i++) {
-            Point p = my_points[i];
-            // check for dupes here since we are sorted in natural order
-            if (p.compareTo(my_points[i + 1]) == 0) {
-                throw new IllegalArgumentException("duplicate point detected");
-            }
+        for (int i = 0; i < my_points_natural.length - 1; i++) {
+            Point p = my_points_natural[i];
 
             // sort by slope with p, start at i+1 to skip comparison with self
-            int j = i + 1;
-            Arrays.sort(my_points, j, my_points.length, p.slopeOrder());
+            int j = 0;
+            Arrays.sort(my_points_slope, 0, my_points_slope.length, p.slopeOrder());
 
             if (DEBUG) {
                 StdOut.println("pivot = " + p);
-                for (int z = j; z < my_points.length; z++) {
-                    StdOut.println(my_points[z] + " slope " + p.slopeTo(my_points[z]));
+                for (int z = j; z < my_points_slope.length; z++) {
+                    StdOut.println(my_points_slope[z] + " slope " + p.slopeTo(my_points_slope[z]));
                 }
             }
 
             // look at each remaining point and check slope
-            while (j < my_points.length) {
+            while (j < my_points_slope.length) {
                 seg_points.clear();     // reset the points we are considering
 
                 // count how many points have equal slope to current index
                 int count = 1;
-                while (j + count < my_points.length &&
-                        p.slopeTo(my_points[j]) == p.slopeTo(my_points[j + count])) {
-                    seg_points.add(my_points[j + count]);
+                while (j + count < my_points_slope.length &&
+                        p.slopeTo(my_points_slope[j]) == p.slopeTo(my_points_slope[j + count])) {
+                    seg_points.add(my_points_slope[j + count]);
                     count++;
                 }
                 if (count >= SEG_LENGTH - 1) {
                     if (DEBUG) StdOut.println("segment found, length " + (count + 1));
+
                     // add the first comparison points here
                     seg_points.add(p);
-                    seg_points.add(my_points[j]);
-                    segments.add(create_segment(seg_points));
+                    seg_points.add(my_points_slope[j]);
+
+                    // convert to array and sort by natural order
+                    Point[] points_array = seg_points.toArray(new Point[0]);
+                    Arrays.sort(points_array);
+
+                    // only add the segment if the pivot point is the smallest in the segment
+                    // otherwise, we have a subsegment
+                    if (p.compareTo(points_array[0]) == 0) {
+                        segments.add(new LineSegment(points_array[0],
+                                                     points_array[points_array.length - 1]));
+                    }
+
+                    else if (DEBUG) StdOut.println("subsegment, not adding to list");
                 }
                 j = j + count;  // skip ahead since there were no matches
             }
         }
+
     }
 
-    private LineSegment create_segment(ArrayList<Point> points) {
-        Point[] points_array = points.toArray(new Point[0]);
-        Arrays.sort(points_array);
 
-        return new LineSegment(points_array[0], points_array[points_array.length - 1]);
-    }
-
-    // check if there are any nulls or duplicates within a set of 4 points
-    private void check_nulls_and_dupes(Point p1, Point p2, Point p3, Point p4) {
-        if (p1 == null || p2 == null || p3 == null || p4 == null) {
-            throw new IllegalArgumentException("null point detected");
+    // duplicate an array and check all elements for nulls
+    private Point[] dupe_array_and_check_nulls(Point[] points) {
+        Point[] dupe = new Point[points.length];
+        for (int i = 0; i < points.length; i++) {
+            if (points[i] == null) {
+                throw new IllegalArgumentException("null point detected");
+            }
+            dupe[i] = points[i];
         }
+        return dupe;
+    }
 
-        if (p1.compareTo(p2) == 0 || p1.compareTo(p3) == 0 || p1.compareTo(p4) == 0
-                || p2.compareTo(p3) == 0
-                || p2.compareTo(p4) == 0
-                || p3.compareTo(p4) == 0) {
-            throw new IllegalArgumentException("duplicate point detected");
+    // check if there are any duplicate points. assumes points have been sorted.
+    private void check_dupes(Point[] sorted_points) {
+        for (int i = 1; i < sorted_points.length; i++) {
+            if (sorted_points[i - 1].compareTo(sorted_points[i]) == 0) {
+                throw new IllegalArgumentException("duplicate point detected");
+            }
         }
     }
 

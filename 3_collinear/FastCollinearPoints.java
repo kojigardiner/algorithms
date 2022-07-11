@@ -24,7 +24,6 @@ public class FastCollinearPoints {
         check_dupes(my_points_natural);
 
         segments = new ArrayList<LineSegment>();        // storage for segments
-        ArrayList<Point> seg_points = new ArrayList<Point>();   // temp storage for seg creation
 
         for (int i = 0; i < my_points_natural.length - 1; i++) {
             Point p = my_points_natural[i];
@@ -48,26 +47,24 @@ public class FastCollinearPoints {
             while (j < my_points_slope.length) {
                 // only proceed if the pivot point is the smallest
                 // otherwise we may be looking at a subsegment
-                if (p.compareTo(my_points_slope[j]) < 0) {
-                    seg_points.clear();     // reset the points we are considering
+                // count how many points have equal slope to current index
+                int count = 1;
+                while (j + count < my_points_slope.length &&
+                        p.slopeTo(my_points_slope[j]) == p.slopeTo(
+                                my_points_slope[j + count])) {
+                    count++;
+                }
+                if (count >= SEG_LENGTH - 1) {
+                    if (DEBUG) StdOut.println("segment found, length " + (count + 1));
 
-                    // count how many points have equal slope to current index
-                    int count = 1;
-                    while (j + count < my_points_slope.length &&
-                            p.slopeTo(my_points_slope[j]) == p.slopeTo(
-                                    my_points_slope[j + count])) {
-                        count++;
-                    }
-                    if (count >= SEG_LENGTH - 1) {
-                        if (DEBUG) StdOut.println("segment found, length " + (count + 1));
-
+                    if (p.compareTo(my_points_slope[j]) < 0) {
                         segments.add(new LineSegment(p, my_points_slope[j + count - 1]));
                     }
-                    j = j + count;  // skip ahead since there were no matches
+                    else {
+                        if (DEBUG) StdOut.println("subsegment, skipping");
+                    }
                 }
-                else {
-                    j++;
-                }
+                j = j + count;  // skip ahead since there were no matches
             }
         }
 

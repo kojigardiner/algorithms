@@ -20,7 +20,6 @@ public class FastCollinearPoints {
 
         // create a new array that we will modify, checking for nulls as we go
         my_points_natural = dupe_array_and_check_nulls(points);
-        my_points_slope = Arrays.copyOf(my_points_natural, my_points_natural.length);
         Arrays.sort(my_points_natural, 0, my_points_natural.length);    // sort by natural order
         check_dupes(my_points_natural);
 
@@ -32,6 +31,10 @@ public class FastCollinearPoints {
 
             // sort by slope with p, start at i+1 to skip comparison with self
             int j = 0;
+
+            // always take the original natural-sorted array as our base
+            // this ensures stability after the slopeorder sort
+            my_points_slope = Arrays.copyOf(my_points_natural, my_points_natural.length);
             Arrays.sort(my_points_slope, 0, my_points_slope.length, p.slopeOrder());
 
             if (DEBUG) {
@@ -43,36 +46,28 @@ public class FastCollinearPoints {
 
             // look at each remaining point and check slope
             while (j < my_points_slope.length) {
-                seg_points.clear();     // reset the points we are considering
+                // only proceed if the pivot point is the smallest
+                // otherwise we may be looking at a subsegment
+                if (p.compareTo(my_points_slope[j]) < 0) {
+                    seg_points.clear();     // reset the points we are considering
 
-                // count how many points have equal slope to current index
-                int count = 1;
-                while (j + count < my_points_slope.length &&
-                        p.slopeTo(my_points_slope[j]) == p.slopeTo(my_points_slope[j + count])) {
-                    seg_points.add(my_points_slope[j + count]);
-                    count++;
-                }
-                if (count >= SEG_LENGTH - 1) {
-                    if (DEBUG) StdOut.println("segment found, length " + (count + 1));
-
-                    // add the first comparison points here
-                    seg_points.add(p);
-                    seg_points.add(my_points_slope[j]);
-
-                    // convert to array and sort by natural order
-                    Point[] points_array = seg_points.toArray(new Point[0]);
-                    Arrays.sort(points_array);
-
-                    // only add the segment if the pivot point is the smallest in the segment
-                    // otherwise, we have a subsegment
-                    if (p.compareTo(points_array[0]) == 0) {
-                        segments.add(new LineSegment(points_array[0],
-                                                     points_array[points_array.length - 1]));
+                    // count how many points have equal slope to current index
+                    int count = 1;
+                    while (j + count < my_points_slope.length &&
+                            p.slopeTo(my_points_slope[j]) == p.slopeTo(
+                                    my_points_slope[j + count])) {
+                        count++;
                     }
+                    if (count >= SEG_LENGTH - 1) {
+                        if (DEBUG) StdOut.println("segment found, length " + (count + 1));
 
-                    else if (DEBUG) StdOut.println("subsegment, not adding to list");
+                        segments.add(new LineSegment(p, my_points_slope[j + count - 1]));
+                    }
+                    j = j + count;  // skip ahead since there were no matches
                 }
-                j = j + count;  // skip ahead since there were no matches
+                else {
+                    j++;
+                }
             }
         }
 

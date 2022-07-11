@@ -15,7 +15,13 @@ public class BruteCollinearPoints {
         if (points == null) {
             throw new IllegalArgumentException("points cannot be null");
         }
-        my_points = Arrays.copyOf(points, points.length);
+        my_points = new Point[points.length];
+        for (int i = 0; i < points.length; i++) {
+            if (points[i] == null) {
+                throw new IllegalArgumentException("null point detected");
+            }
+            my_points[i] = points[i];
+        }
         Arrays.sort(my_points, 0, my_points.length);
 
         segments = new ArrayList<LineSegment>();

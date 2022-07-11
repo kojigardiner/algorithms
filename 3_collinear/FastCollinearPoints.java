@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 public class FastCollinearPoints {
     private static final int SEG_LENGTH = 4;
+    private static final boolean DEBUG = false;
 
     private ArrayList<LineSegment> segments;
     private Point[] my_points;
@@ -16,6 +17,8 @@ public class FastCollinearPoints {
         if (points == null) {
             throw new IllegalArgumentException("points cannot be null");
         }
+
+        // create a new array that we will modify, checking for nulls as we go
         my_points = new Point[points.length];
         for (int i = 0; i < points.length; i++) {
             if (points[i] == null) {
@@ -23,33 +26,57 @@ public class FastCollinearPoints {
             }
             my_points[i] = points[i];
         }
-        Arrays.sort(my_points, 0, my_points.length);
-        segments = new ArrayList<LineSegment>();
+        Arrays.sort(my_points, 0, my_points.length);    // sort by natural order
+
+        segments = new ArrayList<LineSegment>();        // storage for segments
+        ArrayList<Point> seg_points = new ArrayList<Point>();   // temp storage for seg creation
 
         for (int i = 0; i < my_points.length - 1; i++) {
             Point p = my_points[i];
-
-            if (p == null) {
-                throw new IllegalArgumentException("null point detected");
+            // check for dupes here since we are sorted in natural order
+            if (p.compareTo(my_points[i + 1]) == 0) {
+                throw new IllegalArgumentException("duplicate point detected");
             }
 
-            // start at i+1 to skip comparison with self
-            Arrays.sort(my_points, i + 1, my_points.length, p.slopeOrder());
+            // sort by slope with p, start at i+1 to skip comparison with self
+            int j = i + 1;
+            Arrays.sort(my_points, j, my_points.length, p.slopeOrder());
 
-            for (int j = i + 1; j <= my_points.length - SEG_LENGTH + 1; j++) {
-                Point q1 = my_points[j];
-                Point q2 = my_points[j + 1];
-                Point q3 = my_points[j + 2];
-
-                check_nulls_and_dupes(p, q1, q2, q3);
-
-                if (p.slopeTo(q1) == p.slopeTo(q2)
-                        && p.slopeTo(q1) == p.slopeTo(q3)) {
-                    // assumes the initial sort and this sort are stable
-                    segments.add(new LineSegment(p, q3));
+            if (DEBUG) {
+                StdOut.println("pivot = " + p);
+                for (int z = j; z < my_points.length; z++) {
+                    StdOut.println(my_points[z] + " slope " + p.slopeTo(my_points[z]));
                 }
             }
+
+            // look at each remaining point and check slope
+            while (j < my_points.length) {
+                seg_points.clear();     // reset the points we are considering
+
+                // count how many points have equal slope to current index
+                int count = 1;
+                while (j + count < my_points.length &&
+                        p.slopeTo(my_points[j]) == p.slopeTo(my_points[j + count])) {
+                    seg_points.add(my_points[j + count]);
+                    count++;
+                }
+                if (count >= SEG_LENGTH - 1) {
+                    if (DEBUG) StdOut.println("segment found, length " + (count + 1));
+                    // add the first comparison points here
+                    seg_points.add(p);
+                    seg_points.add(my_points[j]);
+                    segments.add(create_segment(seg_points));
+                }
+                j = j + count;  // skip ahead since there were no matches
+            }
         }
+    }
+
+    private LineSegment create_segment(ArrayList<Point> points) {
+        Point[] points_array = points.toArray(new Point[0]);
+        Arrays.sort(points_array);
+
+        return new LineSegment(points_array[0], points_array[points_array.length - 1]);
     }
 
     // check if there are any nulls or duplicates within a set of 4 points

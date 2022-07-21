@@ -6,11 +6,13 @@ import edu.princeton.cs.algs4.StdOut;
 public class Solver {
     private Node final_node;
     private boolean solvable;
+    private Stack<Board> solution_stack;
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
         solvable = false;
         final_node = null;
+        solution_stack = null;
 
         SolverInstance s = new SolverInstance(initial);
         SolverInstance s_twin = new SolverInstance(initial.twin());
@@ -103,14 +105,16 @@ public class Solver {
     // sequence of boards in a shortest solution; null if unsolvable
     public Iterable<Board> solution() {
         if (!this.isSolvable()) return null;
+        if (solution_stack != null) return solution_stack;
 
-        Stack<Board> seq = new Stack<Board>();
+        Stack<Board> solution_stack = new Stack<Board>();
 
-        while (final_node != null) {
-            seq.push(final_node.b);
-            final_node = final_node.prev;
+        Node n = final_node;
+        while (n != null) {
+            solution_stack.push(n.b);
+            n = n.prev;
         }
-        return seq;
+        return solution_stack;
     }
 
     // test client (see below)

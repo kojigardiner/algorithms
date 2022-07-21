@@ -46,7 +46,8 @@ public class Board {
 
         for (int i = 0; i < this.n; i++) {
             for (int j = 0; j < this.n; j++) {
-                if (this.tiles[i][j] != goal(i, j)) sum++;
+                int val = this.tiles[i][j];
+                if (val != 0 && val != goal(i, j)) sum++;
             }
         }
 
@@ -60,11 +61,12 @@ public class Board {
         for (int i = 0; i < this.n; i++) {
             for (int j = 0; j < this.n; j++) {
                 int val = this.tiles[i][j];
-
-                // -1 to account for starting tiles at 1
-                int goal_i = (val - 1) / n;
-                int goal_j = (val - 1) % n;
-                sum += (abs(i - goal_i) + abs(j - goal_j));
+                if (val != 0) {
+                    // -1 to account for starting tiles at 1
+                    int goal_i = (val - 1) / n;
+                    int goal_j = (val - 1) % n;
+                    sum += (abs(i - goal_i) + abs(j - goal_j));
+                }
             }
         }
 

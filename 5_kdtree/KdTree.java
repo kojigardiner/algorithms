@@ -39,6 +39,7 @@ public class KdTree {
             Point2D p) {                 // add the point to the set (if it is not already in the set)
         if (p == null) throw new IllegalArgumentException("p cannot be null");
 
+        // on the initial call, set rect to encompass the entire canvas
         root = put(root, 0, 1, 0, 1, p, 0);
     }
 
@@ -55,9 +56,9 @@ public class KdTree {
         if (p.equals(r.p)) return r;     // point already exists in tree
 
         // logic for rects:
-        // if we are a vertical split, the x-coord will be the split position
+        // if we are a vertical split, the x-coord will be the split position.
         //      for the left side, the split position is xmax, for the right side it is xmin
-        // if we are on a horizontal split, the y-coord will be the split position
+        // if we are on a horizontal split, the y-coord will be the split position.
         //      for the bottom side, the split position is ymax, for the top side it is ymin
         // all other rects coords carry over from the parent node
         if (level == 0) { // vertical split
@@ -96,13 +97,16 @@ public class KdTree {
         draw(root, 0);
     }
 
+    // Recursively draw each node in the tree
     private void draw(Node r, int level) {
-        if (r == null) return;
+        if (r == null) return;  // reached end of tree
 
+        // draw the point
         StdDraw.setPenColor(StdDraw.BLACK);
         StdDraw.setPenRadius(0.01);
         StdDraw.point(r.p.x(), r.p.y());
 
+        // draw the split line
         StdDraw.setPenRadius();
         if (level == 0) {   // vertical split
             StdDraw.setPenColor(StdDraw.RED);
@@ -128,10 +132,10 @@ public class KdTree {
         return points;
     }
 
-    // recursively search for points in the query rect
+    // Recursively search for points in the query rect
     private void range(Node r, RectHV rect, ArrayList<Point2D> points) {
-        if (r == null) return;
-        if (!r.rect.intersects(rect)) return;
+        if (r == null) return;  // reached end of tree
+        if (!r.rect.intersects(rect)) return;   // no points in this subtree
         if (rect.contains(r.p)) points.add(r.p);
         range(r.lb, rect, points);
         range(r.rt, rect, points);
@@ -148,13 +152,14 @@ public class KdTree {
         return closest.p;
     }
 
-    // Store the closest point along with its distance to avoid recalculating each time
+    // Store the closest point along with its distance to avoid recalculating dist each time
     private static class Closest {
         private Point2D p = null;
         private double dist = Double.POSITIVE_INFINITY;
     }
 
     // Recursively search for closest point
+    // Pass the current node, the search point p, the currently found closest point, and the level in the tree
     private Closest nearest(Node r, Point2D p, Closest closest, int level) {
         if (r == null) return closest;  // we've reached the end of the tree
 
@@ -178,6 +183,7 @@ public class KdTree {
         }
 
         // optimize order of search based on where the search point is wrt current split line
+        // search the subtree that is closest to the query point first
         if (level == 0) {   // vertical split line
             if (p.x() < r.p.x()) {
                 closest = nearest(r.lb, p, closest, (level + 1) % dim);

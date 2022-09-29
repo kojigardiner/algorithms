@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 #include "bag.h"
 
@@ -57,7 +56,7 @@ bool bag_is_empty(bag_t *b) {
 }
 
 // Returns number of items in the bag
-int bag_size(bag_t *b) {
+unsigned int bag_size(bag_t *b) {
   return (b->n);
 }
 
@@ -90,8 +89,14 @@ bool bag_remove(bag_t *b, void *item) {
     return false;
   }
   memcpy(item, b->first->item, b->item_size);
-  free(b->first->item);
+  
+  node_t *old_first = b->first;
+
   b->first = b->first->next;
+  
+  free(old_first->item);
+  free(old_first);
+
   b->n--;
   return true;
 }
@@ -99,13 +104,13 @@ bool bag_remove(bag_t *b, void *item) {
 // Free memory associated with bag
 void bag_free(bag_t *b) {
   node_t *n = b->first;
-  node_t *last;
+  node_t *old_n;
 
   while (n) {
-    free(n->item);
-    last = n;
+    old_n = n;
     n = n->next;
-    free(last);
+    free(old_n->item);
+    free(old_n);
   }
 
   free(b);

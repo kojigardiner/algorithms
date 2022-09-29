@@ -25,7 +25,7 @@ void bag_add(bag_t *b, void *item);
 bool bag_is_empty(bag_t *b);
 
 // Returns the number of items in the bag.
-int bag_size(bag_t *b);
+unsigned int bag_size(bag_t *b);
 
 // Frees memory associated with bag.
 void bag_free(bag_t *b);

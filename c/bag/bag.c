@@ -18,12 +18,17 @@ typedef struct bag {
   node_t *curr_iter;
 } bag_t;
 
-// Creates an empty bag 
-void bag_init(bag_t *b, size_t item_size) {
+// Creates an empty bag to store elements of a given item_size and returns a
+// pointer to it
+bag_t *bag_init(size_t item_size) {
+  bag_t *b = malloc(sizeof(bag_t));
+
   b->first = NULL;
   b->curr_iter = NULL;
   b->n = 0;
   b->item_size = item_size;
+  
+  return b;
 }
 
 // Adds an item to the bag
@@ -56,26 +61,25 @@ int bag_size(bag_t *b) {
 }
 
 // Initializes iterator
-void bag_iter_first(bag_t *b) {
+void bag_iter_init(bag_t *b) {
   if (bag_is_empty(b)) {
     return;
   }
   b->curr_iter = b->first;
 }
 
-// Moves iterator to next item
-void bag_iter_next(bag_t *b) {
-  b->curr_iter = b->curr_iter->next;
+// Returns true if iterator has more items
+bool bag_iter_has_next(bag_t *b) {
+  if (bag_is_empty(b)) {
+    return false;
+  }
+  return b->curr_iter != NULL;
 }
 
-// Returns if we have reached the end of the iterator
-bool bag_iter_done(bag_t *b) {
-  return (b->curr_iter == NULL);
-}
-
-// Gets the item at the currennt iterator position and copies it to item
-void bag_iter_get(bag_t *b, void *item) {
+// Copies the next item
+void bag_iter_next(bag_t *b, void *item) {
   memcpy(item, b->curr_iter->item, b->item_size);
+  b->curr_iter = b->curr_iter->next;
 }
 
 // Removes one item from the bag, returns true if successful, false otherwise
@@ -102,66 +106,6 @@ void bag_free(bag_t *b) {
     n = n->next;
     free(last);
   }
-}
 
-int main() {
-  // Test a bag of ints
-  bag_t b;
-  int value;
-  int values[] = {10, 3, 4, -11};
-  bag_init(&b, sizeof(int));
-
-  for (int i = 0; i < NELEMS(values); i++) {
-    value = values[i];
-    bag_add(&b, &value);
-    printf("Added %d to bag\n", value);
-  }
-
-  assert(bag_size(&b) == 4);
-
-  for (bag_iter_first(&b); !bag_iter_done(&b); bag_iter_next(&b)) {
-    bag_iter_get(&b, &value);
-    printf("Iterated %d in bag\n", value);
-  }
-
-  while(!bag_is_empty(&b)) {
-    bag_remove(&b, &value);
-    printf("Removed %d from bag\n", value);
-  }
-
-  assert(bag_is_empty(&b));
-
-  bag_free(&b);
-
-  // Test a bag of strings (stored on the heap)
-  char *str;
-  char *strs[] = {"hello", "world", "this is me", "what"};;
-  bag_init(&b, sizeof(char *));
-
-  for (int i = 0; i < NELEMS(strs); i++) {
-    str = strdup(strs[i]);
-    bag_add(&b, &str);
-    printf("Added %s to bag\n", str);
-  }
-  
-  assert(bag_size(&b) == 4);
-
-  for (bag_iter_first(&b); !bag_iter_done(&b); bag_iter_next(&b)) {
-    bag_iter_get(&b, &str);
-    printf("Iterated %s in bag\n", str);
-  }
-
-  while(!bag_is_empty(&b)) {
-    bag_remove(&b, &str);
-    printf("Removed %s from bag\n", str);
-    free(str);
-  }
-
-  assert(bag_is_empty(&b));
-
-  bag_free(&b);
-
-  printf("Passed all tests.\n");
-
-  return 0;
+  free(b);
 }

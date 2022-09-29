@@ -6,20 +6,20 @@
 
 #include "bag.h"
 
+// Generic node for the underlying linked list data structure.
 typedef struct node {
   void *item;
   struct node *next;
 } node_t;
 
+// Generic bag data type.
 typedef struct bag {
-  size_t item_size;
-  unsigned int n;
-  node_t *first;
-  node_t *curr_iter;
+  size_t item_size;   // size of item type stored in the bag
+  unsigned int n;     // number of items currently in the bag
+  node_t *first;      // pointer to first node
+  node_t *curr_iter;  // iterator pointer
 } bag_t;
 
-// Creates an empty bag to store elements of a given item_size and returns a
-// pointer to it
 bag_t *bag_init(size_t item_size) {
   bag_t *b = malloc(sizeof(bag_t));
 
@@ -45,6 +45,7 @@ void bag_add(bag_t *b, void *item) {
   }
   memcpy(new_node->item, item, b->item_size);
 
+  // Add to front of the list
   new_node->next = b->first;
   b->first = new_node;
   b->n++;

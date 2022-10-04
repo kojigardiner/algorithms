@@ -114,4 +114,5 @@ void bag_free(bag_t *b) {
   }
 
   free(b);
+  b = NULL;
 }

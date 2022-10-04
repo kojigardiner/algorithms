@@ -37,6 +37,7 @@ void test_new_bag_is_empty() {
 
   TEST_ASSERT_NOT_NULL(b);
   TEST_ASSERT_EQUAL(0, bag_size(b));
+  TEST_ASSERT_TRUE(bag_is_empty(b));
 }
 
 // Tests that a bag has the correct number of ints
@@ -48,11 +49,12 @@ void test_add_ints() {
 // Tests that a bag of ints can be iterated over and that its contents match the
 // reverse order of insertion
 void test_iter_ints_reverse_order() {
+  fill_ints();
+
   int value, counter;
   unsigned int size = bag_size(b);
   counter = 1;
 
-  fill_ints();
   bag_iter_init(b);
   while (bag_iter_has_next(b)) {
     bag_iter_next(b, &value);
@@ -70,12 +72,13 @@ void test_add_strs() {
 // Tests that a bag of strings can be iterated over and that its contents match
 // the reverse order of insertion
 void test_iter_strs_reverse_order() {
+  fill_strs();
+
   int counter;
   unsigned int size = bag_size(b);
   char *str;
   counter = 1;
 
-  fill_strs();
   bag_iter_init(b);
   while (bag_iter_has_next(b)) {
     bag_iter_next(b, &str);
@@ -88,14 +91,12 @@ void test_iter_strs_reverse_order() {
 void test_int_free() {
   fill_ints();
   bag_free(b);
-  TEST_ASSERT_NULL(b);
 }
 
 // Tests creating a bag of strs and freeing it
 void test_str_free() {
   fill_strs();
   bag_free(b);
-  TEST_ASSERT_NULL(b);
 }
 
 // Main

@@ -26,6 +26,7 @@ void test_uf_init() {
   TEST_ASSERT_NULL(uf);
 }
 
+// Tests with a small uf structure
 void test_uf_simple() {
   uf = uf_init(2);
   uf_union(uf, 0, 0);
@@ -37,6 +38,7 @@ void test_uf_simple() {
   TEST_ASSERT_TRUE(uf_connected(uf, 0, 1));
 }
 
+// Tests with a larger uf structure
 void test_uf_larger() {
   uf = uf_init(10);
   for (int i = 0; i < 10; i++) {
@@ -49,6 +51,7 @@ void test_uf_larger() {
   TEST_ASSERT_FALSE(uf_connected(uf, 7, 8));
 }
 
+// Tests uf functions with invalid indices
 void test_uf_out_of_bounds() {
   uf = uf_init(2);
   uf_union(uf, 0, 2);
@@ -58,8 +61,13 @@ void test_uf_out_of_bounds() {
   uf_union(uf, -1, -1);
   uf_union(uf, 0, -1);
   TEST_ASSERT_EQUAL(uf_count(uf), 2);
+  TEST_ASSERT_FALSE(uf_connected(uf, 0, 1));
+  TEST_ASSERT_FALSE(uf_connected(uf, -1, 1));
+  TEST_ASSERT_FALSE(uf_connected(uf, -1, 2));
+  TEST_ASSERT_FALSE(uf_connected(uf, 2, 2));
 }
 
+// Tests freeing uf structure memory
 void test_uf_free() {
   uf = uf_init(10);
   uf_free(uf);

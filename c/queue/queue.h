@@ -1,5 +1,4 @@
-// Implementation of a generic queue data type with iteration support. Uses a 
-// singly linked list as a the underlying data structure.
+// Interface for a generic queue data type with iteration support.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 

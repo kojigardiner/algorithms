@@ -1,3 +1,8 @@
+// Implementation for a generic stack data type with iteration support. Uses a 
+// singly linked list as a the underlying data structure.
+// 
+// Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>

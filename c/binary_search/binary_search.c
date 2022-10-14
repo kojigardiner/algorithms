@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
     }
     while(fscanf(input_file, "%d\n", &curr) > 0) {
       count++;
-      in_list = (int *)realloc(in_list, count);
+      in_list = (int *)realloc(in_list, count * sizeof(*in_list));
       if (!in_list) {
         printf("Could not realloc in_list\n");
         return 1;

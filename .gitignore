@@ -7,3 +7,6 @@
 *.lift
 *.iml
 *.dSYM
+*.mov
+*CREDITS*
+.vscode

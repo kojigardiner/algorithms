@@ -1,3 +1,9 @@
+// Implementation for a generic bag data type with iteration support. No
+// guarantee is made as to the order in which elements in the bag will be 
+// iterated. Uses a singly linked list as a the underlying data structure.
+// 
+// Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>

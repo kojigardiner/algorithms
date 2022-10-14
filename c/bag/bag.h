@@ -1,6 +1,6 @@
-// Implementation of a generic bag data type with iteration support. No
+// Interface for a generic bag data type with iteration support. No
 // guarantee is made as to the order in which elements in the bag will be 
-// iterated. Uses a singly linked list as a the underlying data structure.
+// iterated.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 

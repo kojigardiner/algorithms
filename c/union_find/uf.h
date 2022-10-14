@@ -17,9 +17,6 @@ uf_t *uf_init(int n);
 // Adds connection between components containing p and q.
 void uf_union(uf_t *uf, int p, int q);
 
-// Returns the component identifier for p.
-int uf_find(uf_t *uf, int p);
-
 // Returns true if p and q are in the same component, otherwise false.
 bool uf_connected(uf_t *uf, int p, int q);
 

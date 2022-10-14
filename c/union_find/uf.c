@@ -70,6 +70,10 @@ uf_t *uf_init(int n) {
 
 // Finds root of component tree
 int uf_root(uf_t *uf, int i) {
+  if (i < 0 || i > (uf->n - 1)) {
+    return -1;
+  }
+
   int start_idx = i;
   int root;
   while (i != uf->id[i]) {
@@ -101,6 +105,10 @@ int uf_find(uf_t *uf, int p) {
 
 // Adds connection between components containing p and q
 void uf_union(uf_t *uf, int p, int q) {
+  if (p < 0 || p > (uf->n - 1) || q < 0 || q > (uf->n - 1)) {
+    return;
+  }
+
   int pid = uf_find(uf, p);
   int qid = uf_find(uf, q);
 
@@ -136,6 +144,9 @@ void uf_union(uf_t *uf, int p, int q) {
 
 // Returns true if p and q are in the same component, otherwise false
 bool uf_connected(uf_t *uf, int p, int q) {
+  if (p < 0 || p > (uf->n - 1) || q < 0 || q > (uf->n - 1)) {
+    return false;
+  }
   return (uf_find(uf, p) == uf_find(uf, q));
 }
 
@@ -147,5 +158,8 @@ int uf_count(uf_t *uf) {
 // Frees memory allocated to a uf struct
 void uf_free(uf_t *uf) {
   free(uf->id);
+  #ifdef QUICK_UNION
+  free(uf->sz);
+  #endif
   free(uf);
 }

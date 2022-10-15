@@ -18,15 +18,17 @@ void shellsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void 
 
 // my_ prefix to distinguish from C stdlib implementations
 
-void my_mergesort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
+void mergesort_td(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux);
-void my_mergesort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux);
+void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux);
+
+void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
 void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
 void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
-  my_mergesort(arr, item_size, n, less);
+  mergesort_bu(arr, item_size, n, less);
 }
 
 bool is_sorted(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
@@ -96,40 +98,68 @@ void shellsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void 
   }
 }
 
-// Entry to mergesort. Sets up a parallel aux array for the merge operation and
-// calls the recursive my_mergesort_recursive function that actually performs
-// the sort.
-void my_mergesort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
+// Entry to top-down mergesort. Sets up a parallel aux array for the merge 
+// operation and calls the recursive mergesort_td_recursive function that 
+// actually performs the sort.
+void mergesort_td(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
   void *aux = malloc(n * item_size);
   if (!aux) {
     perror("Failed to malloc");
     exit(EXIT_FAILURE);
   }
 
-  my_mergesort_recursive(arr, item_size, less, 0, n - 1, aux);
+  mergesort_td_recursive(arr, item_size, less, 0, n - 1, aux);
   free(aux);
 }
 
-// Mergesort recursively splits the array to be sorted in half, sorts each half,
-// then merges the sorted halves together using the merge function.
-void my_mergesort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux) {
+// Top-down mergesort recursively splits the array to be sorted in half, sorts 
+// each half, then merges the sorted halves together using the merge function.
+void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux) {
   if (hi <= lo) {
     return;
   }
   int mid = lo + (hi - lo) / 2;
 
   // Left half
-  my_mergesort_recursive(arr, item_size, less, lo, mid, aux);
+  mergesort_td_recursive(arr, item_size, less, lo, mid, aux);
 
   // Right half
-  my_mergesort_recursive(arr, item_size, less, mid + 1, hi, aux);
+  mergesort_td_recursive(arr, item_size, less, mid + 1, hi, aux);
 
   // Merge
   merge(arr, item_size, less, lo, mid, hi, aux);
 }
 
-// Merges two sorted arrays, arr[lo:mid] and arr[mid+1:hi]. Uses auxiliary
-// memory proportional to the number of elements.
+// Bottom-up mergesort uses the merge function to merge progressively larger
+// pairs of arrays, starting with each 1x1 pair of elements in the array, then
+// each pair of 2x2 elements in the array, and so forth. Like top-down
+// mergesort, this function creates an auxiliary array of size n that is used
+// during the merge.
+void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
+  void *aux = malloc(n * item_size);
+  if (!aux) {
+    perror("Failed to malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  // len is the length of each half that will then be merged
+  int mid, hi;
+  for (int len = 1; len < n; len *= 2) {
+    for (int lo = 0; lo < n - len; lo += (len + len)) {
+      mid = lo + len - 1;
+      hi = lo + len + len - 1;
+      // special case to ensure the last merge does not go out of bounds
+      if (hi > n - 1) {
+        hi = n - 1;
+      }
+      merge(arr, item_size, less, lo, mid, hi, aux);
+    }
+  }
+  free(aux);
+}
+
+// Merges two sorted halves of array, arr[lo:mid] and arr[mid+1:hi]. Uses 
+// auxiliary memory proportional to the number of elements.
 void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux) {
   int i = lo;       // index into the left half
   int j = mid + 1;  // index into the right half

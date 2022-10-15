@@ -11,7 +11,7 @@ typedef struct custom {
   int id;
 } custom_t;
 
-static const int count = 5;
+static const int count = 10;
 static int int_arr[count];
 static int int_dup_arr[count];
 static float float_arr[count];
@@ -26,17 +26,19 @@ void setUp() {
   srand(RAND_SEED);   // seed PRNG
 
   // Reset global data
-  int int_data[count] = {-1, 0, 1, 2, 3};
-  int int_dup_data[count] = {1, 1, 1, 1, 1};
-  float float_data[count] = {0.1, 1.2, 2.4, 3.3, 4.7};
-  double double_data[count] = {0.1, 1.2, 2.4, 3.3, 4.7};
-  unsigned int uint_data[count] = {0, 1, 2, 3, 4};
-  char *str_data[count] = {"apple", "banana", "carrot", "durian", "eel"};
-  char char_data[count] = "abcde";
+  int int_data[count] = {-1, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+  int int_dup_data[count] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float float_data[count] = {0.1, 1.2, 2.4, 3.3, 4.7, 5.3, 6.1, 7.9, 8.1, 9.8};
+  double double_data[count] = {0.1, 1.2, 2.4, 3.3, 4.7, 5.3, 6.1, 7.9, 8.1, 9.8};
+  unsigned int uint_data[count] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  char *str_data[count] = {"apple", "banana", "carrot", "durian", "eel", "frankfurter", "gelato", "harissa", "icecream", "jam"};
+  char char_data[count] = "abcdefghij";
   custom_t custom_data[count] = {{.name = "Alice", .id = 0}, {.name = "Bob", .id = 1}, 
                           {.name = "Charlie", .id = 2}, {.name = "David", .id = 3},
-                          {.name = "Eve", .id = 4}};
-  int permutation_data[count] = {3, 0, 2, 4, 1};  // arbitrary permutation for shuffling
+                          {.name = "Eve", .id = 4}, {.name = "Frank", .id = 5},
+                          {.name = "Greg", .id = 6}, {.name = "Harriet", .id = 7},
+                          {.name = "Ingrid", .id = 8}, {.name = "Janet", .id = 9}};
+  int permutation_data[count] = {8, 0, 2, 4, 6, 7, 9, 1, 3, 5};  // arbitrary permutation for shuffling
 
   for (int i = 0; i < count; i++) {
     int_arr[i] = int_data[i];
@@ -131,7 +133,13 @@ void test_custom_is_sorted() {
 
 void test_int_sort() {
   shuffle(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), permutation);
+  // for (int i = 0; i < count; i++) {
+  //   printf("%d\n", int_arr[i]);
+  // }
   sort(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int);
+  // for (int i = 0; i < count; i++) {
+  //   printf("%d\n", int_arr[i]);
+  // }
   TEST_ASSERT_TRUE(is_sorted(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int));
 }
 
@@ -178,12 +186,27 @@ void test_custom_sort() {
 void test_int_random_sort() {
   int numbers = 1000;
   int int_rand_arr[numbers];
-  for (int i = 0; i < numbers; i++) {
-    int_rand_arr[i] = rand();
-  }
-
   sort(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int);
   TEST_ASSERT_TRUE(is_sorted(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int));
+}
+
+void test_text_sort() {
+  char *text = strdup("SORTEXAMPLE");
+  sort(text, sizeof(char), strlen(text), less_char);
+  TEST_ASSERT_TRUE(is_sorted(text, sizeof(char), strlen(text), less_char));
+  free(text);
+}
+
+void test_empty_sort() {
+  int empty[0];
+  sort(empty, sizeof(int), 0, less_int);
+  TEST_ASSERT_TRUE(is_sorted(empty, sizeof(int), 0, less_int));
+}
+
+void test_one_sort() {
+  int one[1] = {1};
+  sort(one, sizeof(int), 1, less_int);
+  TEST_ASSERT_TRUE(is_sorted(one, sizeof(int), 1, less_int));
 }
 
 // Main
@@ -207,6 +230,9 @@ int main() {
   RUN_TEST(test_custom_sort);
 
   RUN_TEST(test_int_random_sort);
+  RUN_TEST(test_text_sort);
+  RUN_TEST(test_empty_sort);
+  RUN_TEST(test_one_sort);
 
   return UNITY_END();
 }

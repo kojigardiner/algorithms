@@ -1,7 +1,7 @@
 #include "../../../Unity/src/unity.h"
 #include "../sort/sort.h"
-#include "string.h"
-#include "stdlib.h"
+#include <string.h>
+#include <stdlib.h>
 
 #define RAND_SEED 0
 
@@ -70,7 +70,7 @@ bool less_custom_id(void *v, void *w) {
 }
 
 // Shuffles an array using the given permutation
-void shuffle(void *arr, size_t item_size, size_t n, int *permutation) {
+void shuffle_with_permutation(void *arr, size_t item_size, size_t n, int *permutation) {
   uint8_t new_arr[item_size * n];
 
   for (int i = 0; i < n; i++) {
@@ -81,6 +81,36 @@ void shuffle(void *arr, size_t item_size, size_t n, int *permutation) {
 }
 
 // Tests
+
+// Tests that the sort library's shuffle function works 
+void test_shuffle() {
+  int len = 1000;
+  int shuffle_arr[len];   // array to be shuffled
+  int shuffle_count[len]; // array to count occurrences in shuffled array
+
+  // Fill the arrays
+  for (int i = 0; i < len; i++) {
+    shuffle_arr[i] = i;
+    shuffle_count[i] = 0;
+  }
+  
+  // Randomly shuffle the array
+  shuffle(shuffle_arr, sizeof(int), len);
+
+  // Tally occurrences of each value
+  for (int i = 0; i < len; i++) {
+    int value = shuffle_arr[i];
+    TEST_ASSERT_TRUE(value >= 0);
+    TEST_ASSERT_TRUE(value < len);
+
+    shuffle_count[value] += 1;
+  }
+
+  // Check that each value occurred once
+  for (int i = 0; i < len; i++) {
+    TEST_ASSERT_TRUE(shuffle_count[i] == 1);
+  }
+}
 
 // Tests that pre-sorted arrays correctly identify as such
 void test_int_is_sorted() {
@@ -132,7 +162,7 @@ void test_custom_is_sorted() {
 }
 
 void test_int_sort() {
-  shuffle(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), permutation);
+  shuffle_with_permutation(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), permutation);
   // for (int i = 0; i < count; i++) {
   //   printf("%d\n", int_arr[i]);
   // }
@@ -144,41 +174,41 @@ void test_int_sort() {
 }
 
 void test_float_sort() {
-  shuffle(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), permutation);
+  shuffle_with_permutation(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), permutation);
   sort(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float);
   TEST_ASSERT_TRUE(is_sorted(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float));
 }
 
 void test_double_sort() {
-  shuffle(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), permutation);
+  shuffle_with_permutation(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), permutation);
   sort(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double);
   TEST_ASSERT_TRUE(is_sorted(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double));
 }
 
 void test_str_sort() {
-  shuffle(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), permutation);
+  shuffle_with_permutation(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), permutation);
   sort(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str);
   TEST_ASSERT_TRUE(is_sorted(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str));
 }
 
 void test_char_sort() {
-  shuffle(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), permutation);
+  shuffle_with_permutation(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), permutation);
   sort(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char);
   TEST_ASSERT_TRUE(is_sorted(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char));
 }
 
 void test_uint_sort() {
-  shuffle(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), permutation);
+  shuffle_with_permutation(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), permutation);
   sort(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint);
   TEST_ASSERT_TRUE(is_sorted(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint));
 }
 
 void test_custom_sort() {
-  shuffle(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
+  shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
   sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id);
   TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id));
   
-  shuffle(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
+  shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
   sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name);
   TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name));
 }
@@ -212,6 +242,8 @@ void test_one_sort() {
 // Main
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_shuffle);
+
   RUN_TEST(test_int_is_sorted);
   RUN_TEST(test_uint_is_sorted);
   RUN_TEST(test_int_dup_is_sorted);

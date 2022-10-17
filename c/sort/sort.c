@@ -7,28 +7,28 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "sort.h"
 
-void exchange(void *arr, size_t item_size, int i, int j);
-
+// Sort functions
 void selectionsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void insertionsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void shellsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
-
-// my_ prefix to distinguish from C stdlib implementations
-
 void mergesort_td(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
-void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux);
-void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux);
-
 void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
-
-void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
+// my_ prefix to distinguish from C stdlib implementations
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
+// Helper functions
+void exchange(void *arr, size_t item_size, int i, int j);
+void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux);
+void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux);
+int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
+void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
+
 void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
-  mergesort_bu(arr, item_size, n, less);
+  my_quicksort(arr, item_size, n, less);
 }
 
 bool is_sorted(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
@@ -158,6 +158,77 @@ void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, vo
   free(aux);
 }
 
+// Performs quicksort by recursively partitioning and sorting sub-arrays by
+// random partition elements. The array is first randomly shuffled, then the
+// partition is selected as the first element in the array. Starting at each end
+// of the sub-array, elements are then compared against the partitioning element
+// and swapped if they are found to be out-of-order.
+void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
+  shuffle(arr, item_size, n);
+  
+  my_quicksort_recursive(arr, item_size, less, 0, n - 1);
+}
+
+// Recursive call to the quicksort algorithm.
+void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi) {
+  if (hi <= lo) {
+    return;
+  }
+
+  int j = partition(arr, item_size, less, lo, hi);
+  
+  my_quicksort_recursive(arr, item_size, less, lo, j - 1);  // sort left half
+  my_quicksort_recursive(arr, item_size, less, j + 1, hi);  // sort right half
+}
+
+// Partitions and sorts an array using the element at arr[lo] as the partition.
+// Returns the index of the final position of the partioning element.
+int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi) {
+  // Set left-to-right and right-to-left sscan indices. Because the while loops 
+  // below use pre-increment and pre-decrement, the actual comparisons will 
+  // start at arr[lo + 1] and arr[hi].
+  int i = lo;
+  int j = hi + 1;
+
+  void *v = arr + lo * item_size;   // partitioning element
+
+  // Scan from left-to-right until we find an entry >= partioning, and scan from
+  // right-to-left until we find an entry <= partioning. Swap these entries.
+  // If ever our scan indices cross or either one reaches the end, break.
+  // As a final step, swap the partioning element with the final index of the
+  // right-hand scan.
+  while (true) {
+    // Increment the left pointer until we reach an element >= the partioning
+    // element
+    while (less(arr + (++i) * item_size, v)) {
+      // Break if we reach the right end
+      if (i == hi) {
+        break;
+      }
+    }
+
+    // Decrement the right pointer until we reach an element >= the partioning
+    // element
+    while (less(v, arr + (--j) * item_size)) {
+      // Break if we reach the left end
+      if (j == lo) {
+        break;
+      }
+    }
+    // Break if left/right indices have crossed
+    if (i >= j) {
+      break;
+    }
+    // Swap the out-of-order elements at index i and j
+    exchange(arr, item_size, i, j);
+  }
+
+  // Swap the partioning element with the element at index j
+  exchange(arr, item_size, lo, j);
+
+  return j;
+}
+
 // Merges two sorted halves of array, arr[lo:mid] and arr[mid+1:hi]. Uses 
 // auxiliary memory proportional to the number of elements.
 void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux) {
@@ -202,6 +273,27 @@ void exchange(void *arr, size_t item_size, int i, int j) {
 
   // arr[j] = tmp
   memcpy(arr + item_size * j, tmp, item_size);
+}
+
+// Randomly shuffles an array in place. Note that for small array sizes this is
+// not precisely uniform.
+void shuffle(void *arr, size_t item_size, size_t n) {
+  srand(time(NULL));  // seed PRNG
+
+  void *tmp = malloc(sizeof(item_size));
+  if (!tmp) {
+    perror("Failed to malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < n; i++) {
+    int r = i + rand() % (n - i);
+    memcpy(tmp, arr + i * item_size, item_size);
+    memcpy(arr + i * item_size, arr + r * item_size, item_size);
+    memcpy(arr + r * item_size, tmp, item_size);
+  }
+
+  free(tmp);
 }
 
 // Comparison functions

@@ -17,6 +17,10 @@ void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 // function less. Returns false otherwise.
 bool is_sorted(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
+// Randomly shuffles an array in place. Note that for small array sizes this is
+// not precisely uniform.
+void shuffle(void *arr, size_t item_size, size_t n);
+
 // Comparison functions for commmon types. Comparison functions for more
 // complex types must be provided by the client.
 bool less_int(void *v, void *w);

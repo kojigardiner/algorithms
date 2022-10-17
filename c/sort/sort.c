@@ -27,8 +27,30 @@ void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, vo
 int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
 void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
 
-void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
-  my_quicksort(arr, item_size, n, less);
+void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), enum sort_type type) {
+  switch (type) {
+    case SELECTION:
+      selectionsort(arr, item_size, n, less);
+      break;
+    case INSERTION:
+      insertionsort(arr, item_size, n, less);
+      break;
+    case SHELL:
+      shellsort(arr, item_size, n, less);
+      break;
+    case MERGE_TD:
+      mergesort_td(arr, item_size, n, less);;
+      break;
+    case MERGE_BU:
+      mergesort_bu(arr, item_size, n, less);
+      break;
+    case QUICK:
+      my_quicksort(arr, item_size, n, less);
+      break;
+    default:
+      perror("Unexpected sort type");
+      exit(EXIT_FAILURE);
+  }
 }
 
 bool is_sorted(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
@@ -162,7 +184,9 @@ void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, vo
 // random partition elements. The array is first randomly shuffled, then the
 // partition is selected as the first element in the array. Starting at each end
 // of the sub-array, elements are then compared against the partitioning element
-// and swapped if they are found to be out-of-order.
+// and swapped if they are found to be out-of-order. Note that this is a naive
+// version of quicksort that does not perform well for arrays with numerous
+// duplicate entries.
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
   shuffle(arr, item_size, n);
   
@@ -280,7 +304,7 @@ void exchange(void *arr, size_t item_size, int i, int j) {
 void shuffle(void *arr, size_t item_size, size_t n) {
   srand(time(NULL));  // seed PRNG
 
-  void *tmp = malloc(sizeof(item_size));
+  void *tmp = malloc(item_size);
   if (!tmp) {
     perror("Failed to malloc");
     exit(EXIT_FAILURE);

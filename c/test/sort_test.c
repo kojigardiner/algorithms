@@ -21,6 +21,7 @@ static char *str_arr[count];
 static char char_arr[count];
 static int permutation[count];
 custom_t custom_arr[count];
+enum sort_type types[6] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK};
 
 void setUp() {
   srand(RAND_SEED);   // seed PRNG
@@ -161,82 +162,110 @@ void test_custom_is_sorted() {
   TEST_ASSERT_FALSE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id));
 }
 
+// Actual sorting tests
 void test_int_sort() {
-  shuffle_with_permutation(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), permutation);
-  // for (int i = 0; i < count; i++) {
-  //   printf("%d\n", int_arr[i]);
-  // }
-  sort(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int);
-  // for (int i = 0; i < count; i++) {
-  //   printf("%d\n", int_arr[i]);
-  // }
-  TEST_ASSERT_TRUE(is_sorted(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), permutation);  
+    sort(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(int_arr, sizeof(int_arr[0]), NELEMS(int_arr), less_int));
+  }
 }
 
 void test_float_sort() {
-  shuffle_with_permutation(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), permutation);
-  sort(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float);
-  TEST_ASSERT_TRUE(is_sorted(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), permutation);
+    sort(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(float_arr, sizeof(float_arr[0]), NELEMS(float_arr), less_float));
+  }
 }
 
 void test_double_sort() {
-  shuffle_with_permutation(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), permutation);
-  sort(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double);
-  TEST_ASSERT_TRUE(is_sorted(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), permutation);
+    sort(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(double_arr, sizeof(double_arr[0]), NELEMS(double_arr), less_double));
+  }
 }
 
 void test_str_sort() {
-  shuffle_with_permutation(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), permutation);
-  sort(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str);
-  TEST_ASSERT_TRUE(is_sorted(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), permutation);
+    sort(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str));
+  }
 }
 
 void test_char_sort() {
-  shuffle_with_permutation(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), permutation);
-  sort(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char);
-  TEST_ASSERT_TRUE(is_sorted(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), permutation);
+    sort(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(char_arr, sizeof(char_arr[0]), NELEMS(char_arr), less_char));
+  }
 }
 
 void test_uint_sort() {
-  shuffle_with_permutation(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), permutation);
-  sort(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint);
-  TEST_ASSERT_TRUE(is_sorted(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), permutation);
+    sort(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(uint_arr, sizeof(uint_arr[0]), NELEMS(uint_arr), less_uint));
+  }
 }
 
 void test_custom_sort() {
-  shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
-  sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id);
-  TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id));
-  
-  shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
-  sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name);
-  TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
+    sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_id));
+
+    shuffle_with_permutation(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), permutation);
+    sort(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(custom_arr, sizeof(custom_arr[0]), NELEMS(custom_arr), less_custom_name));
+  }
 }
 
 void test_int_random_sort() {
-  int numbers = 1000;
-  int int_rand_arr[numbers];
-  sort(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int);
-  TEST_ASSERT_TRUE(is_sorted(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    int numbers = 1000;
+    int int_rand_arr[numbers];
+    sort(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(int_rand_arr, sizeof(int_rand_arr[0]), NELEMS(int_rand_arr), less_int));
+  }
 }
 
 void test_text_sort() {
-  char *text = strdup("SORTEXAMPLE");
-  sort(text, sizeof(char), strlen(text), less_char);
-  TEST_ASSERT_TRUE(is_sorted(text, sizeof(char), strlen(text), less_char));
-  free(text);
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    char *text = strdup("SORTEXAMPLE");
+    sort(text, sizeof(char), strlen(text), less_char, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(text, sizeof(char), strlen(text), less_char));
+    free(text);
+  }
 }
 
 void test_empty_sort() {
-  int empty[0];
-  sort(empty, sizeof(int), 0, less_int);
-  TEST_ASSERT_TRUE(is_sorted(empty, sizeof(int), 0, less_int));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    int empty[0];
+    sort(empty, sizeof(int), 0, less_int, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(empty, sizeof(int), 0, less_int));
+  }
 }
 
 void test_one_sort() {
-  int one[1] = {1};
-  sort(one, sizeof(int), 1, less_int);
-  TEST_ASSERT_TRUE(is_sorted(one, sizeof(int), 1, less_int));
+  for (int i = 0; i < NELEMS(types); i++) {
+    setUp();
+    int one[1] = {1};
+    sort(one, sizeof(int), 1, less_int, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(one, sizeof(int), 1, less_int));
+  }
 }
 
 // Main

@@ -9,9 +9,18 @@
 
 #define NELEMS(a) sizeof(a) / sizeof(a[0])
 
+enum sort_type {
+  SELECTION,
+  INSERTION,
+  SHELL,
+  MERGE_TD,
+  MERGE_BU,
+  QUICK,
+};
+
 // Sorts an array of generic items of the given item_size, using a pointer to a
 // comparison function less.
-void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
+void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), enum sort_type type);
 
 // Returns true if an array is in sorted order, according to the comparsion
 // function less. Returns false otherwise.

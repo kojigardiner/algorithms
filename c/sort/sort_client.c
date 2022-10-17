@@ -1,15 +1,45 @@
 // Sort client that accepts ...
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
+#include <string.h>
+
 #include "sort.h"
 
-int main(int argc, char *argv[]) {
-  int arr[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+void init_arr(int *arr, int len) {  
+  for (int i = 0; i < len; i++) {
+    arr[i] = rand();
+  }
+}
 
-  if (is_sorted(arr, sizeof(arr[0]), 10, less_int)) {
-    printf("Sorted!\n");
-  } else {
-    printf("Not sorted\n");
+int main(int argc, char *argv[]) {
+  int len = 1000;
+  int *arr = NULL;
+  int *arr_cpy = NULL;
+  clock_t t;
+  enum sort_type types[6] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK};
+  srand(time(NULL));
+
+  printf("type,length,time\n");
+  for (int i = 0; i < 5; i++) {
+    arr = malloc(len * sizeof(int));
+    arr_cpy = malloc(len * sizeof(int));
+    init_arr(arr, len);
+
+    for (int j = 0; j < NELEMS(types); j++) {      
+      memcpy(arr_cpy, arr, len * sizeof(int));  // reset the array contents
+
+      t = clock();
+      sort(arr_cpy, sizeof(int), len, less_int, types[j]);
+      t = clock() - t;
+
+      printf("%d,%d,%f\n", types[j], len, ((double)t)/CLOCKS_PER_SEC);
+    }
+    len *= 2;
+
+    free(arr);
+    free(arr_cpy);
   }
 
   return 0;

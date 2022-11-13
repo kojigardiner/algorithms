@@ -1,4 +1,20 @@
-// Implementation of a generic priority queue using a binary heap.
+// Implementation of a generic priority queue using a binary heap. The binary 
+// heap is a complete binary tree implemented as an array, with index 0 unused, 
+// and index 1 being the root of the tree. Each node has a value greater than
+// that of either of its children.
+// 
+// To find the two children of an node, go to index 2*k and 2*k+1. To find the
+// parent of an node, go to index floor(k/2).
+//
+// Inserting an element involves placing it at the end of the array, then
+// calling the swim() function to repeatedly compare the new element against
+// that of its parent, and exchanging elements if they are not in proper order.
+//
+// Removing the MAX element involves exchanging the last and first elements in 
+// the tree, returning the previous first element, then repeatedly calling the
+// sink function on the new first element, comparing it against both of its
+// children and if the element is smaller, exchanging it with the larger of its 
+// two children, repeating this process until the elements are in proper order.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 

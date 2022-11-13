@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   int *arr = NULL;
   int *arr_cpy = NULL;
   clock_t t;
-  enum sort_type types[6] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK};
+  enum sort_type types[7] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK, HEAP};
   srand(time(NULL));
 
   printf("type,length,time\n");

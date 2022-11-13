@@ -21,7 +21,7 @@ static char *str_arr[count];
 static char char_arr[count];
 static int permutation[count];
 custom_t custom_arr[count];
-enum sort_type types[6] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK};
+enum sort_type types[7] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK, HEAP};
 
 void setUp() {
   srand(RAND_SEED);   // seed PRNG

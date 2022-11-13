@@ -19,6 +19,7 @@ void mergesort_td(void *arr, size_t item_size, size_t n, bool (*less)(void *, vo
 void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 // my_ prefix to distinguish from C stdlib implementations
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
+void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
 // Helper functions
 void exchange(void *arr, size_t item_size, int i, int j);
@@ -26,6 +27,7 @@ void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, in
 void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi, void *aux);
 int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
 void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
+void sink(void *arr, size_t item_size, int idx, size_t n, bool (*less)(void *, void *));
 
 void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), enum sort_type type) {
   switch (type) {
@@ -46,6 +48,9 @@ void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), e
       break;
     case QUICK:
       my_quicksort(arr, item_size, n, less);
+      break;
+    case HEAP:
+      my_heapsort(arr, item_size, n, less);
       break;
     default:
       perror("Unexpected sort type");
@@ -203,6 +208,92 @@ void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, vo
   
   my_quicksort_recursive(arr, item_size, less, lo, j - 1);  // sort left half
   my_quicksort_recursive(arr, item_size, less, j + 1, hi);  // sort right half
+}
+
+// Performs heapsort by first arranging the input array in heap-order, then
+// repeatedly exchanging the first (largest) element of the heap with the last
+// element, reducing the heap size by 1, and calling "sink" on the new first
+// element. This has the effect of progressively placing items in sorted order
+// from the end of the array to the front.
+void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *)) {
+  // To use basic heap functions, we need the array to start at index 1. This
+  // allocates memory and shifts the position of the array by 1 index. This is 
+  // not memory efficient. Note that the first element is at position 1, and the
+  // last element at position n.
+  void *temp_arr = malloc(item_size * (n + 1));
+  if (!temp_arr) {
+    perror("Failed to malloc");
+    exit(EXIT_FAILURE);
+  }
+  memcpy(temp_arr + item_size, arr, item_size * n);
+
+  // Construct the heap by arranging the array in heap order. Start from the end
+  // of the array and iterate toward the beginning, "sinking" each item as we go.
+  // We can actually start halfway through the array as the last half have no
+  // children and thus do not require the sink operation to be called on them.
+  for (int i = n/2; i >= 1; i--) {
+    sink(temp_arr, item_size, i, n, less);
+  }
+
+  // Sortdown, but repeatedly exchanging the first (largest) element with the 
+  // last.
+  int last_idx = n;
+  while (last_idx > 1) {
+    // Swap the first and last elements. The last element is now in place.
+    exchange(temp_arr, item_size, 1, last_idx);
+
+    // Decrement the index of the last item.
+    last_idx--;
+
+    // Sink the new first element into its heap-ordered position.
+    sink(temp_arr, item_size, 1, last_idx, less);
+  }
+
+  // Move the sorted array back to the original array and free the temp sorting
+  // array.
+  memcpy(arr, temp_arr + item_size, item_size * n);
+  free(temp_arr);
+}
+
+// Sink helper function for heapsort.
+// Moves the item at the given idx downward in the binary heap to
+// its heap-ordered position, where it is larger than or equal to both its 
+// children.
+void sink(void *arr, size_t item_size, int idx, size_t n, bool (*less)(void *, void *)) {
+  int child_idx1 = idx * 2;
+  int child_idx2 = idx * 2 + 1;
+  
+  while (idx * 2 <= n) {
+    // Only one child to worry about
+    if (child_idx2 > n) {
+      if (!less(arr + child_idx1 * item_size, arr + idx * item_size)) {
+        exchange(arr, item_size, idx, child_idx1);
+        idx = child_idx1;
+      } else {
+        break;
+      }
+    // Need to check against largest child
+    } else {
+      // child2 is larger
+      if (less(arr + child_idx1 * item_size, arr + child_idx2 * item_size)) {
+        // Compare against child2
+        if (!less(arr + child_idx2 * item_size, arr + idx * item_size)) {
+          exchange(arr, item_size, idx, child_idx2);
+          idx = child_idx2;
+        } else {
+          break;
+        }
+      // child 1 is larger, so compare against it
+      } else if (!less(arr + child_idx1 * item_size, arr + idx * item_size)) {
+        exchange(arr, item_size, idx, child_idx1);
+        idx = child_idx1;
+      } else {
+        break;
+      }
+    }
+    child_idx1 = idx * 2;
+    child_idx2 = idx * 2 + 1;
+  }
 }
 
 // Partitions and sorts an array using the element at arr[lo] as the partition.

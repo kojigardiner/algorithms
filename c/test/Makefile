@@ -3,7 +3,7 @@ CFLAGS = -Wall -Werror -g
 ALGORITHMS_PATH := ..
 UNITY_PATH := ../../../Unity/src
 
-objects := bag_test stack_test queue_test uf_test sort_test priority_queue_test
+objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
@@ -61,6 +61,9 @@ unity.o: $(UNITY_PATH)/unity.c
 	@$(CC) -c $(CFLAGS) $^ -o $@
 
 # Common library
+lib_test: lib.o lib_test.o unity.o
+	@$(CC) $(CFLAGS) $^ -o $@
+
 lib.o: $(ALGORITHMS_PATH)/lib/lib.c
 	@$(CC) -c $(CFLAGS) $^ -o $@
 

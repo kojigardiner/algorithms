@@ -6,8 +6,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-
-#define NELEMS(a) sizeof(a) / sizeof(a[0])
+#include "../lib/lib.h"
 
 // Generic queue data type.
 typedef struct queue queue_t;

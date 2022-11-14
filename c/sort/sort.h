@@ -6,8 +6,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-
-#define NELEMS(a) sizeof(a) / sizeof(a[0])
+#include "../lib/lib.h"
 
 enum sort_type {
   SELECTION,
@@ -30,12 +29,3 @@ bool is_sorted(void *arr, size_t item_size, size_t n, bool (*less)(void *, void 
 // Randomly shuffles an array in place. Note that for small array sizes this is
 // not precisely uniform.
 void shuffle(void *arr, size_t item_size, size_t n);
-
-// Comparison functions for commmon types. Comparison functions for more
-// complex types must be provided by the client.
-bool less_int(void *v, void *w);
-bool less_uint(void *v, void *w);
-bool less_float(void *v, void *w);
-bool less_double(void *v, void *w);
-bool less_char(void *v, void *w);
-bool less_str(void *v, void *w);

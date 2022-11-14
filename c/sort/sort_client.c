@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
   int *arr_cpy = NULL;
   clock_t t;
   enum sort_type types[7] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK, HEAP};
+  char *names[7] = {"SELECTION", "INSERTION", "SHELL", "MERGE_TD", "MERGE_BU", "QUICK", "HEAP"};
   srand(time(NULL));
 
   printf("type,length,time\n");
@@ -34,7 +35,7 @@ int main(int argc, char *argv[]) {
       sort(arr_cpy, sizeof(int), len, less_int, types[j]);
       t = clock() - t;
 
-      printf("%d,%d,%f\n", types[j], len, ((double)t)/CLOCKS_PER_SEC);
+      printf("%s,%d,%f\n", names[j], len, ((double)t)/CLOCKS_PER_SEC);
     }
     len *= 2;
 

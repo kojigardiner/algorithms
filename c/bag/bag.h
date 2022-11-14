@@ -8,8 +8,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-
-#define NELEMS(a) sizeof(a) / sizeof(a[0])
+#include "../lib/lib.h"
 
 // Generic bag data type.
 typedef struct bag bag_t;

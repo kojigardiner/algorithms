@@ -3,10 +3,20 @@ CFLAGS = -Wall -Werror -g
 ALGORITHMS_PATH := ..
 UNITY_PATH := ../../../Unity/src
 
-objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test
+objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test symbol_table_test
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Symbol Table
+# Priority Queue
+symbol_table_test: lib.o symbol_table_test.o symbol_table.o unity.o
+	@echo Compiling symbol_table_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+symbol_table.o: $(ALGORITHMS_PATH)/symbol_table/symbol_table.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
 
 # Priority Queue
 priority_queue_test: lib.o priority_queue_test.o priority_queue.o unity.o

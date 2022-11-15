@@ -30,6 +30,16 @@ void test_less_int() {
   }
 }
 
+void test_compare_int() {
+  int a[] = {4, -5, 948, 0, -5, 0, 5, 4};
+  int b[] = {5, 5, 5000, 5, -5, 0, 0, 1};
+  int result[] = {-1, -1, -1, -1, 0, 0, 1, 1};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_int(&a[i], &b[i]));
+  }
+}
+
 void test_less_uint() {
   unsigned a[] = {4, 948,  0, 0, 5, 4};
   unsigned b[] = {5, 5000, 5, 0, 0, 1};
@@ -41,6 +51,16 @@ void test_less_uint() {
     } else {
       TEST_ASSERT_FALSE(less_uint(&a[i], &b[i]));
     }
+  }
+}
+
+void test_compare_uint() {
+  unsigned a[] = {4, 948,  0, 0, 5, 4};
+  unsigned b[] = {5, 5000, 5, 0, 0, 1};
+  int result[] = {-1, -1, -1, 0, 1, 1};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_uint(&a[i], &b[i]));
   }
 }
 
@@ -58,6 +78,16 @@ void test_less_float() {
   }
 }
 
+void test_compare_float() {
+  float a[] = {4.5, -5.0, 948.123,  0,   -5.6, 0, 5.2, 4.1};
+  float b[] = {5.1,  5.9, 5000.345, 5.2, -5.6, 0, 0.0, 1.1};
+  int result[] = {-1, -1, -1, -1, 0, 0, 1, 1};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_float(&a[i], &b[i]));
+  }
+}
+
 void test_less_double() {
   double a[] = {4.5, -5.0, 948.123,  0,   -5.6, 0, 5.2, 4.1};
   double b[] = {5.1,  5.9, 5000.345, 5.2, -5.6, 0, 0.0, 1.1};
@@ -69,6 +99,16 @@ void test_less_double() {
     } else {
       TEST_ASSERT_FALSE(less_double(&a[i], &b[i]));
     }
+  }
+}
+
+void test_compare_double() {
+  double a[] = {4.5, -5.0, 948.123,  0,   -5.6, 0, 5.2, 4.1};
+  double b[] = {5.1,  5.9, 5000.345, 5.2, -5.6, 0, 0.0, 1.1};
+  int result[] = {-1, -1, -1, -1, 0, 0, 1, 1};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_double(&a[i], &b[i]));
   }
 }
 
@@ -86,6 +126,16 @@ void test_less_char() {
   }
 }
 
+void test_compare_char() {
+  char a[5] = "addxf";
+  char b[5] = "bzdae";
+  int result[] = {-1, -1, 0, 1, 1};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_char(&a[i], &b[i]));
+  }
+}
+
 void test_less_str() {
   char *a[] = {"hello", "h", "hello", "world", ""};
   char *b[] = {"world", "w", "hello", "hello", ""};
@@ -100,15 +150,31 @@ void test_less_str() {
   }
 }
 
+void test_compare_str() {
+  char *a[] = {"hello", "h", "hello", "world", ""};
+  char *b[] = {"world", "w", "hello", "hello", ""};
+  int result[] = {-1, -1, 0, 1, 0};
+
+  for (int i = 0; i < NELEMS(a); i++) {
+    TEST_ASSERT_EQUAL(result[i], compare_str(&a[i], &b[i]));
+  }
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_nelems);
   RUN_TEST(test_less_int);
+  RUN_TEST(test_compare_int);
   RUN_TEST(test_less_uint);
+  RUN_TEST(test_compare_uint);
   RUN_TEST(test_less_float);
+  RUN_TEST(test_compare_float);
   RUN_TEST(test_less_double);
+  RUN_TEST(test_compare_double);
   RUN_TEST(test_less_char);
+  RUN_TEST(test_compare_char);
   RUN_TEST(test_less_str);
+  RUN_TEST(test_compare_str);
   return UNITY_END();
 }

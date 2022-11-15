@@ -14,3 +14,11 @@ bool less_float(void *v, void *w);
 bool less_double(void *v, void *w);
 bool less_char(void *v, void *w);
 bool less_str(void *v, void *w);
+
+// Returns -1 if v < 1, +1 if v > w, and 0 if v == w
+int compare_int(void *v, void *w);
+int compare_uint(void *v, void *w);
+int compare_float(void *v, void *w);
+int compare_double(void *v, void *w);
+int compare_char(void *v, void *w);
+int compare_str(void *v, void *w);

@@ -43,6 +43,7 @@ node_t *put(st_t *st, node_t *node, void *key, void *value);
 bool get(st_t *st, node_t *node, void *key, void *value_found);
 node_t *new_node(st_t *st, void *key, void *value);
 int size(node_t *node);
+void free_tree(node_t *node);
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
@@ -185,9 +186,23 @@ unsigned int st_size(st_t *st) {
   return size(st->root);
 }
 
+// Recursively frees memory assoicated with the subtree rooted at node.
+void free_tree(node_t *node) {
+  if (node == NULL) {
+    return;
+  }
+  free_tree(node->left);
+  free(node->key);
+  free(node->value);
+  free_tree(node->right);
+}
+
 // Frees memory associated with the symbol table.
 void st_free(st_t *st) {
   // Iterate and free all nodes as well as the st
+  free_tree(st->root);
+  free(st);
+
   return;
 }
 
@@ -205,13 +220,6 @@ bool st_iter_init(st_t *st) {
 
   st->curr_iter = st->root;
 
-  // // Traverse the left links until we hit the end. Push all interim nodes onto
-  // // the iterator stack.
-  // while (st->curr_iter != NULL) {
-  //   stack_push(st->iter_stack, &st->curr_iter);
-  //   st->curr_iter = st->curr_iter->left;
-  // }
-
   return true;
 }
 
@@ -225,6 +233,8 @@ bool st_iter_has_next(st_t *st) {
 
 // Copies the next key in the tree to the memory address of key.
 void st_iter_next(st_t *st, void *key) {
+  // If we have hit a null node AND the stack is empty, we are done traversing
+  // the tree.
   while (!stack_is_empty(st->iter_stack) || st->curr_iter != NULL) {
     // Traverse left links until we hit a null node. Push all nodes along the
     // way to the stack.

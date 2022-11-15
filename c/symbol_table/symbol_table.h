@@ -35,7 +35,8 @@ unsigned int st_size(st_t *st);
 void st_free(st_t *st);
 
 // Initializes an iterator for examining the keys of the symbol table.
-void st_iter_init(st_t *st);
+// Returns true if the iterator is successfully created, false otherwise.
+bool st_iter_init(st_t *st);
 
 // Returns true if the iterator has more keys, false otherwise.
 bool st_iter_has_next(st_t *st);

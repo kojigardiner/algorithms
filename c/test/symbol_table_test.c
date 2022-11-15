@@ -118,14 +118,10 @@ void test_st_iter() {
     st_iter_next(st, &key);
     TEST_ASSERT_TRUE(st_get(st, &key, &value));
     TEST_ASSERT_EQUAL((int)(key), value);
+    // printf("key: %c, value: %d\n", key, value);
     counter++;
   }
   TEST_ASSERT_EQUAL(st_size(st), counter);
-}
-
-void test_st_free() {
-  st = st_init(sizeof(char), sizeof(int), compare_char);
-  free(st);
 }
 
 // Main
@@ -139,6 +135,5 @@ int main() {
   RUN_TEST(test_st_count);
   RUN_TEST(test_st_iter_empty);
   RUN_TEST(test_st_iter);
-  RUN_TEST(test_st_free);
   return UNITY_END();
 }

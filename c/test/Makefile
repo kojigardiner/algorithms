@@ -10,7 +10,7 @@ all: $(objects)
 
 # Symbol Table
 # Priority Queue
-symbol_table_test: lib.o symbol_table_test.o symbol_table.o unity.o
+symbol_table_test: lib.o symbol_table_test.o symbol_table.o unity.o stack.o
 	@echo Compiling symbol_table_test
 	$(CC) $(CFLAGS) $^ -o $@
 

@@ -7,10 +7,11 @@ static char *orig_str = "thequickbrownfoxjumpsoverthelazydog";
 static int counts[] = {1,1,1,1,3,1,1,2,1,1,1,1,1,1,4,1,1,2,1,2,2,1,1,1,1,1};
 static int alphabet_len = (int)('z' - 'a' + 1);
 st_t *st;
-
+int st_type;
+int st_types[] = {BST, RED_BLACK_BST};
 
 void setUp() {
-  st = st_init(sizeof(char), sizeof(int), compare_char);
+  st = st_init(sizeof(char), sizeof(int), compare_char, st_type);
 }
 
 void tearDown() {
@@ -127,13 +128,16 @@ void test_st_iter() {
 // Main
 int main() {
   UNITY_BEGIN();
-  RUN_TEST(test_new_st_is_empty);
-  RUN_TEST(test_st_put);
-  RUN_TEST(test_st_put_null);
-  RUN_TEST(test_st_get);
-  RUN_TEST(test_st_get_missing);
-  RUN_TEST(test_st_count);
-  RUN_TEST(test_st_iter_empty);
-  RUN_TEST(test_st_iter);
+  for (int i = 0; i < NELEMS(st_types); i++) {
+    st_type = st_types[i];
+    RUN_TEST(test_new_st_is_empty);
+    RUN_TEST(test_st_put);
+    RUN_TEST(test_st_put_null);
+    RUN_TEST(test_st_get);
+    RUN_TEST(test_st_get_missing);
+    RUN_TEST(test_st_count);
+    RUN_TEST(test_st_iter_empty);
+    RUN_TEST(test_st_iter);
+  }
   return UNITY_END();
 }

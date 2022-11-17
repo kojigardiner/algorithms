@@ -7,13 +7,20 @@
 #include <stdbool.h>
 #include "../lib/lib.h"
 
+enum st_type {
+  BST,
+  RED_BLACK_BST,
+  HASH_TABLE,
+};
+
 // Generic symbol table data type
 typedef struct st st_t;
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
 // function pointer to a function for comparing keys.
-st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *));
+// Pass in an st_type parameter to define the type of symbol table to use.
+st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *), enum st_type type);
 
 // Puts a key value pair in the symbol table. Returns true if successful, false
 // otherwise. Note that null keys and values are not allowed.

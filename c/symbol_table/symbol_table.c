@@ -3,6 +3,12 @@
 // Recursive methods for put() and get() traverse the tree in order to find
 // the matching key.
 //
+// This implementation supports unbalanced BSTs and balanced, red-black BSTs,
+// which maintain tree balance by simulating a 2-3 tree where a node may have
+// either 2 or 3 children. This greatly improves efficiency in cases where keys
+// are inserted in sorted (or near-sorted) order, which would result in an
+// extremely deep tree structure if not for balancing.
+//
 // The iterator makes use of a stack to perform in-order traversal of the tree.
 // Nodes that are visited but not returned are stored on the stack, allowing
 // nodes to be visited in-order (i.e. giving preference to left, root, then 
@@ -20,12 +26,16 @@
 // Node in a binary search tree
 typedef struct node node_t;
 
+const bool RED = true;
+const bool BLACK = false;
+
 struct node {
   node_t *left;
   node_t *right;
   void *key;
   void *value;
   int n;
+  bool color;
 };
 
 // Generic symbol table data type
@@ -36,6 +46,7 @@ typedef struct st {
   int (*compare)(void *, void *);
   node_t *curr_iter;
   my_stack_t *iter_stack;
+  enum st_type type;
 } st_t;
 
 // Private functions
@@ -45,10 +56,16 @@ node_t *new_node(st_t *st, void *key, void *value);
 int size(node_t *node);
 void free_tree(node_t *node);
 
+// Private functions for re-orienting nodes in a red-black BST
+bool is_red(node_t *node);
+void flip_colors(node_t *h);
+node_t *rotate_left(node_t *h);
+node_t *rotate_right(node_t *h);
+
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
 // function pointer to a function for comparing keys.
-st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)) {
+st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *), enum st_type type) {
   st_t *st = malloc(sizeof(st_t));
   if (!st) {
     perror("Failed to malloc\n");
@@ -59,6 +76,7 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   st->value_size = value_size;
   st->compare = compare;
   st->curr_iter = NULL;
+  st->type = type;
 
   return st;
 }
@@ -83,8 +101,98 @@ node_t *new_node(st_t *st, void *key, void *value) {
   node->right = NULL;
   node->n = 1;
 
+  if (st->type == RED_BLACK_BST) {
+    node->color = RED;
+  }
+
   return node;
 }
+
+// Returns true if the parent link to this node is red, false otherwise.
+bool is_red(node_t *h) {
+  if (!h) {
+    return false;
+  }
+  return (h->color == RED);
+}
+
+// Flips the colors for a node whose child links are both red.
+void flip_colors(node_t *h) {
+  h->left->color = BLACK;
+  h->right->color = BLACK;
+  h->color = RED;
+}
+
+// Rotates a node's red right link to its left side, preserving order.
+//    Starting point, with a right-leaning red link:
+//          E(h)
+//         / \\.
+//        D   S(x)
+//           / \.
+//          R   T
+//
+//    Ending point, with the resulting left-leaning red link:
+//          S(x)
+//         //  \.
+//        E(h)  T
+//       / \.
+//      D   R
+node_t *rotate_left(node_t *h) {
+  node_t *x = h->right;   // the node at the right red link
+  
+  // Update positions of nodes
+  h->right = x->left;
+  x->left = h;
+
+  // Update colors of links
+  x->color = h->color;
+  h->color = RED;
+
+  // Update the node counts
+  x->n = h->n;  // since the overall size of the subtree has not changed, we
+                // can just update the count directly
+  h->n = 1 + size(h->left) + size(h->right);  // the lower subtree has changed,
+                                              // so we need to calculate here
+
+  // Return a pointer to the new root
+  return x;
+}
+
+// Rotates a node's red left link to its right side, preserving order.
+//    Starting point, with a left-leaning red link:
+//          S(h)
+//         //  \.
+//        E(x)  T
+//       / \.
+//      D   R
+//
+//    Ending point, with the resulting right-leaning red link:
+//          E(x)
+//         / \\.
+//        D   S(h)
+//           / \.
+//          R   T
+node_t *rotate_right(node_t *h) {
+  node_t *x = h->left;  // the node at the left red link
+
+  // Update positions of the nodes
+  h->left = x->right;
+  x->right = h;
+
+  // Update colors of links
+  x->color = h->color;
+  h->color = RED;
+
+  // Update the node counts
+  x->n = h->n;  // since the overall size of the subtree has not changed, we
+                // can just update the count directly
+  h->n = 1 + size(h->left) + size(h->right);  // the lower subtree has changed,
+                                              // so we need to calculate here
+
+  // Return a pointer to the new root
+  return x;
+}
+
 
 // Returns the size of the subtree rooted at node.
 int size(node_t *node) {
@@ -102,6 +210,9 @@ bool st_put(st_t *st, void *key, void *value) {
   }
   
   st->root = put(st, st->root, key, value);
+  if (st->type == RED_BLACK_BST) {
+    st->root->color = BLACK;  // preserve black for the root
+  }
 
   return true;
 }
@@ -125,6 +236,22 @@ node_t *put(st_t *st, node_t *node, void *key, void *value) {
   } else {
     // If we reached here, we have a key match, so update the value.
     memcpy(node->value, value, st->value_size);
+  }
+
+  // Update tree structure to preserve left-leaning red links
+  if (st->type == RED_BLACK_BST) {
+    // Right-leaning red link
+    if (is_red(node->right) && !is_red(node->left)) {
+      node = rotate_left(node);
+    }
+    // Two left-leaning red links in a row
+    if (is_red(node->left) && is_red(node->left->left)) {
+      node = rotate_right(node);
+    }
+    // Two red links to children
+    if (is_red(node->left) && is_red(node->right)) {
+      flip_colors(node);
+    }
   }
   
   // Update the size of this node based on the size of its subtrees. Given the

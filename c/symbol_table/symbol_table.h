@@ -8,6 +8,7 @@
 #include "../lib/lib.h"
 
 enum st_type {
+  SEQUENTIAL_SEARCH,
   BST,
   RED_BLACK_BST,
   HASH_TABLE,

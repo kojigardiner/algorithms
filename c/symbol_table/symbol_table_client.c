@@ -11,8 +11,8 @@
 #include "symbol_table.h"
 
 int main(int argc, char *argv[]) {
-  int st_types[] = {BST, RED_BLACK_BST};
-  char *st_names[] = {"BST", "RED_BLACK_BST"};
+  int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH};
+  char *st_names[] = {"BST", "RED_BLACK_BST", "SEQUENTIAL_SEARCH"};
 
   FILE *fp;
   if (argc < 2) {
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   }
   int i = atoi(argv[1]);
   if (argc > 2) {
-    fp = fopen(argv[1], "r");
+    fp = fopen(argv[2], "r");
     if (!fp) {
       perror("Failed to open file\n");
       exit(EXIT_FAILURE);

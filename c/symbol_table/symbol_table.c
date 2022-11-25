@@ -1,5 +1,11 @@
 // Implementation of a generic symbol table data type with iteration support.
-// Uses a binary search tree (BST) to store nodes containing key-value pairs.
+// Four implementations are provided, two based on binary search trees, one 
+// based on a unordered singly linked list, and one based on a hash table with
+// separate chaining.
+// 
+// Binary Search Tree (BST) Implementations:
+// -----------------------------------------
+// Stores nodes containing key-value pairs in a tree.
 // Recursive methods for put() and get() traverse the tree in order to find
 // the matching key.
 //
@@ -13,6 +19,19 @@
 // Nodes that are visited but not returned are stored on the stack, allowing
 // nodes to be visited in-order (i.e. giving preference to left, root, then 
 // right).
+//
+// Hash Table and Sequential Search:
+// -----------------------------------------
+// The hash table consists of an array of linked list symbol tables, where each
+// node includes the key and value. The hash function is provided in lib.c,
+// though ideally it should be able to be client-defined for complex objects.
+//
+// The hash table array size is currently hardcoded to 97 entries. Making this
+// parameter dynamic would enable better performance for use cases with large 
+// numbers of keys. An alternative to the separate chaining approach implemented 
+// here is the linear probing approach, which involves directly allocating an
+// array of keys and values, where collisions are handled by iterating past the
+// hash index to the next empty index.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
@@ -22,6 +41,8 @@
 #include <string.h>
 #include "symbol_table.h"
 #include "../stack/stack.h"
+
+#define HASH_TABLE_ENTRIES  97  // should be a prime number
 
 // Node in a binary search tree
 typedef struct node node_t;
@@ -59,6 +80,12 @@ typedef struct st {
   node_t *curr_tree_iter;
   my_stack_t *tree_iter_stack;
 
+  // For separate-chaining hashtable ST
+  st_t **hash_table;
+  int hash_table_size;
+  int curr_hash_iter_idx;
+  int curr_hash_iter_count;
+
   size_t key_size;
   size_t value_size;
   int (*compare)(void *, void *);
@@ -84,6 +111,9 @@ bool put_list(st_t *st, void *key, void *value);
 bool get_list(st_t *st, void *key, void *value_found);
 void free_list(list_node_t *node);
 
+// Private functions for hash tables
+uint32_t hash_compute(st_t *st, void *key);
+
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
 // function pointer to a function for comparing keys.
@@ -95,16 +125,46 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   }
   st->root = NULL;
   st->first = NULL;
+  st->hash_table = NULL;
   st->list_size = 0;
+  st->hash_table_size = 0;
   st->key_size = key_size;
   st->value_size = value_size;
   st->compare = compare;
   st->curr_tree_iter = NULL;
   st->curr_list_iter = NULL;
+  st->curr_hash_iter_idx = 0;
+  st->curr_hash_iter_count = 0;
   st->tree_iter_stack = NULL;
   st->type = type;
 
+  if (st->type == HASH_TABLE) {
+    st->hash_table = malloc(sizeof(st_t *) * HASH_TABLE_ENTRIES);
+    if (!st->hash_table) {
+      perror("Failed to malloc\n");
+      exit(EXIT_FAILURE);
+    }
+
+    // Create a linked list sequential search ST for each element in the hash table
+    for (int i = 0; i < HASH_TABLE_ENTRIES; i++) {
+      st->hash_table[i] = st_init(key_size, value_size, compare, SEQUENTIAL_SEARCH);
+    }
+  }
+
   return st;
+}
+
+// Compute a hash index for the given key. This implementation will work for
+// primitives and strings, but not for pointers to objects. A better method
+// could be to allow the client to provide their own hash function for complex
+// types, similar to the way the "compare" function is user-provided.
+uint32_t hash_compute(st_t *st, void *key) {
+  if (st->compare == compare_str) {
+    char *str = *(char **)key;
+    size_t len = strlen(str);
+    return fnv_hash_32(str, len) % HASH_TABLE_ENTRIES;  
+  }
+  return fnv_hash_32(key, st->key_size) % HASH_TABLE_ENTRIES;
 }
 
 // Returns a new tree node with the given key and value.
@@ -267,6 +327,11 @@ bool st_put(st_t *st, void *key, void *value) {
     case SEQUENTIAL_SEARCH:
       put_list(st, key, value);
       break;
+    case HASH_TABLE:
+      if (put_list(st->hash_table[hash_compute(st, key)], key, value)) {
+        st->hash_table_size++;
+      }
+      break;
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -319,14 +384,14 @@ node_t *put_tree(st_t *st, node_t *node, void *key, void *value) {
   return node;  
 }
 
-// Puts a key value pair on the linked list. Returns true if successful, false
-// otherwise.
+// Puts a key value pair on the linked list. Returns true if a new node is 
+// added, false otherwise.
 bool put_list(st_t *st, void *key, void *value) {
   for (list_node_t *node = st->first; node != NULL; node = node->next) {
     // Search hit, replace value
     if (st->compare(key, node->key) == 0) {
       memcpy(node->value, value, st->value_size);
-      return true;
+      return false;
     }
   }
 
@@ -354,6 +419,8 @@ bool st_get(st_t *st, void *key, void *value_found) {
       return get_tree(st, st->root, key, value_found);
     case SEQUENTIAL_SEARCH:
       return get_list(st, key, value_found);
+    case HASH_TABLE:
+      return get_list(st->hash_table[hash_compute(st, key)], key, value_found);
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -417,6 +484,8 @@ unsigned int st_size(st_t *st) {
       return size_tree(st->root);
     case SEQUENTIAL_SEARCH:
       return st->list_size;
+    case HASH_TABLE:
+      return st->hash_table_size;
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -457,6 +526,10 @@ void st_free(st_t *st) {
     case SEQUENTIAL_SEARCH:
       free_list(st->first);
       break;
+    case HASH_TABLE:
+      for (int i = 0; i < HASH_TABLE_ENTRIES; i++) {
+        free_list(st->hash_table[i]->first);
+      }
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -488,6 +561,11 @@ bool st_iter_init(st_t *st) {
     case SEQUENTIAL_SEARCH:
       st->curr_list_iter = st->first;
       break;
+    case HASH_TABLE:
+      st->curr_hash_iter_idx = 0;
+      st->curr_hash_iter_count = 0;
+      st->curr_list_iter = st->hash_table[st->curr_hash_iter_idx]->first;
+      break;
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -508,6 +586,8 @@ bool st_iter_has_next(st_t *st) {
       return (st->curr_tree_iter != NULL || !stack_is_empty(st->tree_iter_stack));
     case SEQUENTIAL_SEARCH:
       return st->curr_list_iter != NULL;
+    case HASH_TABLE:
+      return (st->curr_hash_iter_count < st->hash_table_size);
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -543,6 +623,16 @@ void st_iter_next(st_t *st, void *key) {
     case SEQUENTIAL_SEARCH:
       memcpy(key, st->curr_list_iter->key, st->key_size);
       st->curr_list_iter = st->curr_list_iter->next;
+      break;
+    case HASH_TABLE:
+      // We've reached the end of the current list, so move to the next one
+      while (!st->curr_list_iter) {
+        st->curr_hash_iter_idx++;
+        st->curr_list_iter = st->hash_table[st->curr_hash_iter_idx]->first;
+      }
+      memcpy(key, st->curr_list_iter->key, st->key_size);
+      st->curr_list_iter = st->curr_list_iter->next;
+      st->curr_hash_iter_count++;
       break;
     default:
       printf("Unrecognized type\n");

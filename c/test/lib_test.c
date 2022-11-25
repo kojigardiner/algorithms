@@ -1,6 +1,7 @@
 #include "../../../Unity/src/unity.h"
 #include "../lib/lib.h"
 #include <string.h>
+#include <stdlib.h>
 
 void setUp() {
 }
@@ -160,6 +161,27 @@ void test_compare_str() {
   }
 }
 
+void test_hash() {
+  char *alphanum = "abcdefghijklmnopqrstuvwxyz0123456789";
+  uint32_t hash;
+  int mod = 37;    // modulo for hash output, prime
+  int counts[mod];  // count hash occurrences
+
+  for (int i = 0; i < mod; i++) {
+    counts[i] = 0;
+  }
+
+  for (int i = 0; i < strlen(alphanum); i++) {
+    hash = fnv_hash_32(&alphanum[i], sizeof(char)) % mod;
+    counts[hash]++;
+  }
+
+  for (int i = 0; i < mod; i++) {
+    // printf("%d : %d\n", i, counts[i]);
+    TEST_ASSERT_LESS_OR_EQUAL(2, counts[i]);
+  }
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
@@ -176,5 +198,6 @@ int main() {
   RUN_TEST(test_compare_char);
   RUN_TEST(test_less_str);
   RUN_TEST(test_compare_str);
+  RUN_TEST(test_hash);
   return UNITY_END();
 }

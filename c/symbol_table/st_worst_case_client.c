@@ -12,8 +12,8 @@
 #include "symbol_table.h"
 
 int main(int argc, char *argv[]) {
-  int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH};
-  char *st_names[] = {"BST", "RED_BLACK_BST", "SEQUENTIAL_SEARCH"};
+  int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE};
+  char *st_names[] = {"BST", "RED_BLACK_BST", "SEQUENTIAL_SEARCH", "HASH_TABLE"};
 
   if (argc < 3) {
     printf("Missing arguments\nUsage: symbol_table_client st_type count\n");

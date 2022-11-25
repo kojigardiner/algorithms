@@ -3,6 +3,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define NELEMS(a) sizeof(a) / sizeof(a[0])
 
@@ -22,3 +23,6 @@ int compare_float(void *v, void *w);
 int compare_double(void *v, void *w);
 int compare_char(void *v, void *w);
 int compare_str(void *v, void *w);
+
+// Computes a 32-bit hash value for a given input value and size.
+uint32_t fnv_hash_32(void *input, size_t size);

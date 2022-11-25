@@ -26,9 +26,7 @@
 // node includes the key and value. The hash function is provided in lib.c,
 // though ideally it should be able to be client-defined for complex objects.
 //
-// The hash table array size is currently hardcoded to 97 entries. Making this
-// parameter dynamic would enable better performance for use cases with large 
-// numbers of keys. An alternative to the separate chaining approach implemented 
+// An alternative to the separate chaining approach implemented 
 // here is the linear probing approach, which involves directly allocating an
 // array of keys and values, where collisions are handled by iterating past the
 // hash index to the next empty index.
@@ -42,7 +40,8 @@
 #include "symbol_table.h"
 #include "../stack/stack.h"
 
-#define HASH_TABLE_ENTRIES  97  // should be a prime number
+#define INITIAL_HASH_TABLE_CHAINS 4
+#define MAX_HASH_TABLE_CHAIN_LEN  10
 
 // Node in a binary search tree
 typedef struct node node_t;
@@ -83,6 +82,7 @@ typedef struct st {
   // For separate-chaining hashtable ST
   st_t **hash_table;
   int hash_table_size;
+  int hash_table_chains;
   int curr_hash_iter_idx;
   int curr_hash_iter_count;
 
@@ -113,6 +113,7 @@ void free_list(list_node_t *node);
 
 // Private functions for hash tables
 uint32_t hash_compute(st_t *st, void *key);
+void resize_hash(st_t *st, int new_size);
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
@@ -128,6 +129,7 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   st->hash_table = NULL;
   st->list_size = 0;
   st->hash_table_size = 0;
+  st->hash_table_chains = INITIAL_HASH_TABLE_CHAINS;
   st->key_size = key_size;
   st->value_size = value_size;
   st->compare = compare;
@@ -139,14 +141,14 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   st->type = type;
 
   if (st->type == HASH_TABLE) {
-    st->hash_table = malloc(sizeof(st_t *) * HASH_TABLE_ENTRIES);
+    st->hash_table = malloc(sizeof(st_t *) * st->hash_table_chains);
     if (!st->hash_table) {
       perror("Failed to malloc\n");
       exit(EXIT_FAILURE);
     }
 
     // Create a linked list sequential search ST for each element in the hash table
-    for (int i = 0; i < HASH_TABLE_ENTRIES; i++) {
+    for (int i = 0; i < st->hash_table_chains; i++) {
       st->hash_table[i] = st_init(key_size, value_size, compare, SEQUENTIAL_SEARCH);
     }
   }
@@ -154,7 +156,7 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   return st;
 }
 
-// Compute a hash index for the given key. This implementation will work for
+// Compute a hash value for the given key. This implementation will work for
 // primitives and strings, but not for pointers to objects. A better method
 // could be to allow the client to provide their own hash function for complex
 // types, similar to the way the "compare" function is user-provided.
@@ -162,9 +164,53 @@ uint32_t hash_compute(st_t *st, void *key) {
   if (st->compare == compare_str) {
     char *str = *(char **)key;
     size_t len = strlen(str);
-    return fnv_hash_32(str, len) % HASH_TABLE_ENTRIES;  
+    return fnv_hash_32(str, len);  
   }
-  return fnv_hash_32(key, st->key_size) % HASH_TABLE_ENTRIES;
+  return fnv_hash_32(key, st->key_size);
+}
+
+// Creates a new hash table of the given size, and iterates over the old table
+// to re-insert all entries.
+void resize_hash(st_t *st, int new_size) {
+  // Allocate the new table
+  st_t **new_hash_table = malloc(sizeof(st_t *) * new_size);
+  if (!new_hash_table) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int i = 0; i < new_size; i++) {
+    new_hash_table[i] = st_init(st->key_size, st->value_size, st->compare, SEQUENTIAL_SEARCH);
+  }
+
+  if (!st_iter_init(st)) {
+    printf("Failed to create iterator\n");
+    exit(EXIT_FAILURE);
+  }
+
+  void *key = malloc(st->key_size);
+  void *value = malloc(st->value_size);
+  if (!key || !value) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Iterate over the old table
+  while (st_iter_has_next(st)) {
+    st_iter_next(st, key);
+    st_get(st, key, value);
+    // Put key/value pairs into the new table
+    st_put(new_hash_table[hash_compute(st, key) % new_size], key, value);
+  }
+  
+  // Free the old table
+  for (int i = 0; i < st->hash_table_chains; i++) {
+    st_free(st->hash_table[i]);
+  }
+  free(st->hash_table);
+
+  // Update size
+  st->hash_table = new_hash_table;
+  st->hash_table_chains = new_size;
 }
 
 // Returns a new tree node with the given key and value.
@@ -328,7 +374,11 @@ bool st_put(st_t *st, void *key, void *value) {
       put_list(st, key, value);
       break;
     case HASH_TABLE:
-      if (put_list(st->hash_table[hash_compute(st, key)], key, value)) {
+      // Enlargen the table if avg chain length is > MAX_HASH_TABLE_CHAIN_LEN
+      if (st->hash_table_size / st->hash_table_chains > MAX_HASH_TABLE_CHAIN_LEN) {
+        resize_hash(st, 2 * st->hash_table_chains);
+      }
+      if (put_list(st->hash_table[hash_compute(st, key) % st->hash_table_chains], key, value)) {
         st->hash_table_size++;
       }
       break;
@@ -420,7 +470,7 @@ bool st_get(st_t *st, void *key, void *value_found) {
     case SEQUENTIAL_SEARCH:
       return get_list(st, key, value_found);
     case HASH_TABLE:
-      return get_list(st->hash_table[hash_compute(st, key)], key, value_found);
+      return get_list(st->hash_table[hash_compute(st, key) % st->hash_table_chains], key, value_found);
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -527,7 +577,7 @@ void st_free(st_t *st) {
       free_list(st->first);
       break;
     case HASH_TABLE:
-      for (int i = 0; i < HASH_TABLE_ENTRIES; i++) {
+      for (int i = 0; i < st->hash_table_chains; i++) {
         free_list(st->hash_table[i]->first);
       }
     default:

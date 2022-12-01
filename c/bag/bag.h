@@ -30,7 +30,7 @@ unsigned int bag_size(bag_t *b);
 void bag_free(bag_t *b);
 
 // Initializes an iterator for examining contents of the bag.
-void bag_iter_init(bag_t *b);
+bool bag_iter_init(bag_t *b);
 
 // Returns true if the iterator has more items, false otherwise.
 bool bag_iter_has_next(bag_t *b);

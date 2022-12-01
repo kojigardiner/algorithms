@@ -27,6 +27,10 @@ typedef struct bag {
 
 bag_t *bag_init(size_t item_size) {
   bag_t *b = malloc(sizeof(bag_t));
+  if (!b) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
 
   b->first = NULL;
   b->curr_iter = NULL;
@@ -66,12 +70,13 @@ unsigned int bag_size(bag_t *b) {
   return (b->n);
 }
 
-// Initializes iterator
-void bag_iter_init(bag_t *b) {
+// Initializes iterator. Returns true if successful, false otherwise.
+bool bag_iter_init(bag_t *b) {
   if (bag_is_empty(b)) {
-    return;
+    return false;
   }
   b->curr_iter = b->first;
+  return true;
 }
 
 // Returns true if iterator has more items

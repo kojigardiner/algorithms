@@ -10,7 +10,7 @@
 // v w
 static const int num_v = 13;
 static const int num_e = 13;
-static const int connections[num_v][num_e] = {{0, 5}, {4, 3}, {0, 1}, {9, 12}, \
+static const int connections[num_e][2] = {{0, 5}, {4, 3}, {0, 1}, {9, 12}, \
                                               {6, 4}, {5, 4}, {0, 2}, {11, 12},\
                                               {9, 10}, {0, 6}, {7, 8}, {9, 11},\
                                               {5, 3}};
@@ -23,7 +23,9 @@ void setUp() {
 }
 
 void tearDown() {
-  free(g);
+  if (g) {
+    graph_free(g);
+  }
 }
 
 // Helper function, fills graph

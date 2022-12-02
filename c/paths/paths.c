@@ -1,16 +1,29 @@
-// Implementation for finding paths in a graph.
+// Implementation for finding paths in a graph given a source vertex. 
+// 
+// When the paths struct is initialized, it uses either depth-first search (DFS) or
+// breadth-first search (BFS) to visit all possible paths, and in so doing
+// mark each visited vertex as well as the previous vertex visited along the 
+// path to each vertex. This enables a simple lookup to see if a path exists
+// to a vertex -- just check if the vertex was marked as visited. 
+//
+// Similarly, returning the path taken is trivial -- simply trace the previously
+// visited vertices from a given vertex until you reach the source. The vertices
+// along this return path are added to a stack, which enables user to iterate
+// over them in source -> target order.
 //
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
 #include "../graph/graph.h"
 #include "../paths/paths.h"
 #include "../stack/stack.h"
+#include "../queue/queue.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 // Private function prototypes
 void dfs(paths_t *p, int v);
+void bfs(paths_t *p, int v);
 
 // Paths data type
 typedef struct paths {
@@ -65,7 +78,18 @@ paths_t *paths_init(graph_t *g, int s, enum paths_type type) {
     p->stacks[i] = NULL;
   }
 
-  dfs(p, s);
+  switch (type) {
+    case DFS:
+      dfs(p, s);
+      break;
+    case BFS:
+      bfs(p, s);
+      break;
+    default:
+      printf("Type %d not recognized!\n", type);
+      exit(EXIT_FAILURE);
+      break;
+  }
 
   return p;
 }
@@ -93,6 +117,40 @@ void dfs(paths_t *p, int v) {
     }
   }
 
+  return;
+}
+
+// Breadth-first search: find paths in the graph associated with p, starting at
+// source vertex v. Uses a queue store to-be-visited vertices. Search paths 
+// expand by a distance of one edge at a time.
+void bfs(paths_t *p, int v) {
+  // Queue used to store to-be-visited vertices
+  queue_t *q = queue_init(sizeof(int));
+  
+  // Enqueue the source vertex
+  queue_enqueue(q, &v);
+
+  // Iterate over the queue until empty, marking each vertex as we get to it,
+  // and adding all unmarked adjacent vertices to the queue.
+  
+  int w;  // current vertex
+  while (!queue_is_empty(q)) {
+    queue_dequeue(q, &w);
+    p->marked[w] = true;
+
+    // Iterate over adjacent vertices
+    graph_adj_iter_init(p->g, w);
+    int x;  // next vertex
+    while (graph_adj_iter_has_next(p->g, w)) {
+      graph_adj_iter_next(p->g, w, &x);
+      if (!p->marked[x]) {
+        queue_enqueue(q, &x);
+        p->edge_to[x] = w;
+      }
+    }
+  }
+
+  free(q);
   return;
 }
 

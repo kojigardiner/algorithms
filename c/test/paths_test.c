@@ -26,9 +26,7 @@ void setUp() {
 }
 
 void tearDown() {
-  if (g) {
-    graph_free(g);
-  }
+  graph_free(g);
   if (p) {
     paths_free(p);
   }
@@ -37,8 +35,10 @@ void tearDown() {
 // Tests
 // Tests creation of a paths struct with out-of-bounds vertices
 void test_out_of_bounds_vertex() {
-  TEST_ASSERT_NULL(paths_init(g, -1, type));
-  TEST_ASSERT_NULL(paths_init(g, num_v, type));
+  p = paths_init(g, -1, type);
+  TEST_ASSERT_NULL(p);
+  p = paths_init(g, num_v, type);
+  TEST_ASSERT_NULL(p);
 }
 
 // Checks that the has_path_to responses are accurate
@@ -126,11 +126,14 @@ void test_paths_iter_out_of_bounds() {
 int main() {
   UNITY_BEGIN();
   
-  RUN_TEST(test_out_of_bounds_vertex);
-  RUN_TEST(test_has_path_to);
-  RUN_TEST(test_paths_iter);
-  RUN_TEST(test_paths_iter_repeat);
-  RUN_TEST(test_paths_iter_out_of_bounds);
+  for (int i = 0; i < NELEMS(types); i++) {
+    type = types[i];
+    RUN_TEST(test_out_of_bounds_vertex);
+    RUN_TEST(test_has_path_to);
+    RUN_TEST(test_paths_iter);
+    RUN_TEST(test_paths_iter_repeat);
+    RUN_TEST(test_paths_iter_out_of_bounds);
+  }
 
   return UNITY_END();
 }

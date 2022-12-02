@@ -29,6 +29,10 @@ typedef struct queue {
 // pointer to the queue. Must call queue_free() when finished using the queue.
 queue_t *queue_init(size_t item_size) {
   queue_t *q = malloc(sizeof(queue_t));
+  if (!q) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
 
   q->item_size = item_size;
   q->n = 0;

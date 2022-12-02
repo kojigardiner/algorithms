@@ -127,16 +127,15 @@ void bfs(paths_t *p, int v) {
   // Queue used to store to-be-visited vertices
   queue_t *q = queue_init(sizeof(int));
   
-  // Enqueue the source vertex
+  // Enqueue the source vertex and mark it
   queue_enqueue(q, &v);
+  p->marked[v] = true;
 
   // Iterate over the queue until empty, marking each vertex as we get to it,
   // and adding all unmarked adjacent vertices to the queue.
-  
   int w;  // current vertex
   while (!queue_is_empty(q)) {
     queue_dequeue(q, &w);
-    p->marked[w] = true;
 
     // Iterate over adjacent vertices
     graph_adj_iter_init(p->g, w);
@@ -145,6 +144,7 @@ void bfs(paths_t *p, int v) {
       graph_adj_iter_next(p->g, w, &x);
       if (!p->marked[x]) {
         queue_enqueue(q, &x);
+        p->marked[x] = true;
         p->edge_to[x] = w;
       }
     }

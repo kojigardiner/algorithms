@@ -1,4 +1,4 @@
-# Algorithms, Fourth Edition by Sedgewick and Wayne
+# Algorithms
 
 This repository contains the following:
 - C implementations of the algorithms detailed in the Algorithms 4th ed. textbook by Robert Sedgewick and Kevin Wayne. The textbook implementations are in Java, and I found porting them to C offered a chance to better understand their details. 

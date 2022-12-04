@@ -10,8 +10,18 @@
 // Graph data type
 typedef struct graph graph_t;
 
+// Type of graph
+enum graph_type {
+  UNDIRECTED,
+  DIRECTED,
+};
+
 // Creates and returns a pointer to a new graph with num_v vertices.
-graph_t *graph_init(int num_v);
+graph_t *graph_init(int num_v, enum graph_type);
+
+// Returns a new graph that has the edges reversed. Should only be called on a 
+// directed graph, on an undirected graph returns NULL.
+graph_t *graph_reverse(graph_t *g);
 
 // Returns the number of vertices in the graph.
 int graph_V(graph_t *g);

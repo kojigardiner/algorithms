@@ -19,7 +19,7 @@ enum paths_type type = DFS;
 enum paths_type types[] = {DFS, BFS};
 
 void setUp() {
-  g = graph_init(num_v);
+  g = graph_init(num_v, UNDIRECTED);
   for (int i = 0; i < num_e; i++) {
     TEST_ASSERT_TRUE(graph_add_edge(g, connections[i][0], connections[i][1]));
   }

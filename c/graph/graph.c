@@ -17,10 +17,11 @@ typedef struct graph {
   int V;      // number of vertices
   int E;      // number of edges
   bag_t **adj;// adjacency lists
+  enum graph_type type;  // type of graph
 } graph_t;
 
 // Creates and returns a pointer to a new graph with num_v vertices.
-graph_t *graph_init(int num_v) {
+graph_t *graph_init(int num_v, enum graph_type type) {
   if (num_v <= 0) {
     return NULL;
   }
@@ -40,6 +41,8 @@ graph_t *graph_init(int num_v) {
   for (int i = 0; i < num_v; i++) {
     g->adj[i] = bag_init(sizeof(int));
   }
+
+  g->type = type;
 
   return g;
 }
@@ -62,7 +65,10 @@ bool graph_add_edge(graph_t *g, int v, int w) {
   }
 
   bag_add(g->adj[v], &w);
-  bag_add(g->adj[w], &v);
+
+  if (g->type == UNDIRECTED) {  
+    bag_add(g->adj[w], &v);
+  }
 
   g->E++;
 
@@ -98,6 +104,26 @@ bool graph_adj_iter_next(graph_t *g, int v, int *w) {
   bag_iter_next(g->adj[v], w);
 
   return true;
+}
+
+// Returns a new graph that has the edges reversed. Should only be called on a 
+// directed graph, on an undirected graph returns NULL.
+graph_t *graph_reverse(graph_t *g) {
+  if (g->type == UNDIRECTED) {
+    return NULL;
+  }
+
+  graph_t *g_r = graph_init(graph_V(g), DIRECTED);
+  for (int v = 0; v < graph_V(g); v++) {
+    graph_adj_iter_init(g, v);
+    int w;
+    while (graph_adj_iter_has_next(g, v)) {
+      graph_adj_iter_next(g, v, &w);
+      graph_add_edge(g_r, w, v);
+    }
+  }
+
+  return g_r;
 }
 
 // Prints the contents of the graph to stdout.

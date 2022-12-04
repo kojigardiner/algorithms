@@ -83,7 +83,7 @@ sg_t *sg_init(char *filename, char *delimiter) {
   }
 
   // Build the graph by reading the file again
-  sg->g = graph_init(st_size(sg->st));
+  sg->g = graph_init(st_size(sg->st), UNDIRECTED);
 
   fp = fopen(filename, "r");
   if (!fp){

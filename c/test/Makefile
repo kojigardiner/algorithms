@@ -3,18 +3,24 @@ CFLAGS = -Wall -Werror -g
 ALGORITHMS_PATH := ..
 UNITY_PATH := ../../../Unity/src
 
-objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test symbol_table_test graph_test paths_test
+objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test symbol_table_test graph_test digraph_test paths_test
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
 
-# Graph
+# Paths
 paths_test: lib.o paths_test.o graph.o unity.o bag.o stack.o queue.o paths.o
 	@echo Compiling paths_test
 	$(CC) $(CFLAGS) $^ -o $@
 
 paths.o: $(ALGORITHMS_PATH)/paths/paths.c
 	$(CC) -c $(CFLAGS) $^ -o $@
+
+
+# Digraph
+digraph_test: lib.o digraph_test.o graph.o unity.o bag.o
+	@echo Compiling digraph_test
+	$(CC) $(CFLAGS) $^ -o $@
 
 # Graph
 graph_test: lib.o graph_test.o graph.o unity.o bag.o

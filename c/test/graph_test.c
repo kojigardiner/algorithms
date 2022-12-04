@@ -19,7 +19,7 @@ static const int connections[num_e][2] = {{0, 5}, {4, 3}, {0, 1}, {9, 12}, \
 graph_t *g;
 
 void setUp() {
-  g = graph_init(num_v);
+  g = graph_init(num_v, UNDIRECTED);
 }
 
 void tearDown() {
@@ -38,7 +38,7 @@ void fill_graph() {
 // Tests
 // Tests creation of a graph with 0 vertices.
 void test_empty_graph_fails() {
-  TEST_ASSERT_NULL(graph_init(0));
+  TEST_ASSERT_NULL(graph_init(0, UNDIRECTED));
 }
 
 // Tests number of vertices is correct.
@@ -147,6 +147,11 @@ void test_print() {
   graph_print(g);
 }
 
+// Test that trying to reverse an undirected graph fails.
+void test_reverse_undirected() {
+  TEST_ASSERT_NULL(graph_reverse(g));
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
@@ -161,6 +166,7 @@ int main() {
   RUN_TEST(test_adj_iter_out_of_bounds);
   RUN_TEST(test_add_edge_out_of_bounds);
   RUN_TEST(test_print);
+  RUN_TEST(test_reverse_undirected);
 
   return UNITY_END();
 }

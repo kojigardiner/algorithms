@@ -23,12 +23,14 @@ typedef struct top_sort {
 top_sort_t *top_sort_init(graph_t *g) {
   // Topological sort is only defined on digraphs
   if (graph_type(g) != DIRECTED) {
+    printf("Graph is not directed!\n");
     return NULL;
   }
   // Check if the graph is a DAG
   cycle_t *c = cycle_init(g);
   if (has_cycle(c)) {
-    return NULL;
+    printf("Graph has a cycle!\n");
+    // return NULL;
   }
 
   top_sort_t *ts = malloc(sizeof(top_sort_t));

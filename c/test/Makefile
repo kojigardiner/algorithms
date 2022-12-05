@@ -3,10 +3,18 @@ CFLAGS = -Wall -Werror -g
 ALGORITHMS_PATH := ..
 UNITY_PATH := ../../../Unity/src
 
-objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test symbol_table_test graph_test digraph_test paths_test cycle_test top_sort_test
+objects := lib_test bag_test stack_test queue_test uf_test sort_test priority_queue_test symbol_table_test graph_test digraph_test paths_test cycle_test top_sort_test cc_test
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Connected components
+cc_test: lib.o cc_test.o graph.o unity.o bag.o cycle.o stack.o connected_components.o topological_sort.o
+	@echo Compiling cc_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+connected_components.o: $(ALGORITHMS_PATH)/connected_components/connected_components.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Cycle
 top_sort_test: lib.o top_sort_test.o graph.o unity.o bag.o cycle.o stack.o topological_sort.o

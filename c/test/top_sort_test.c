@@ -44,28 +44,8 @@ void test_top_sort_iter() {
     i++;
   }
   printf("\n");
-}
 
-void test_top_sort_fail() {
-  graph_t *g = graph_init(13, DIRECTED);
-  graph_add_edge(g, 0, 1);
-  graph_add_edge(g, 0, 5);
-  graph_add_edge(g, 0, 6);
-  graph_add_edge(g, 2, 0);
-  graph_add_edge(g, 2, 3);
-  graph_add_edge(g, 3, 5);
-  graph_add_edge(g, 4, 0);  // causes a cycle
-  graph_add_edge(g, 5, 4);
-  graph_add_edge(g, 6, 4);
-  graph_add_edge(g, 6, 9);
-  graph_add_edge(g, 7, 6);
-  graph_add_edge(g, 8, 7);
-  graph_add_edge(g, 9, 10);
-  graph_add_edge(g, 9, 11);
-  graph_add_edge(g, 9, 12);
-
-  top_sort_t *ts = top_sort_init(g);
-  TEST_ASSERT_NULL(ts);
+  top_sort_free(ts);
 }
 
 // Main
@@ -73,7 +53,6 @@ int main() {
   UNITY_BEGIN();
   
   RUN_TEST(test_top_sort_iter);
-  RUN_TEST(test_top_sort_fail);
 
   return UNITY_END();
 }

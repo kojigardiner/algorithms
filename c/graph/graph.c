@@ -126,6 +126,11 @@ graph_t *graph_reverse(graph_t *g) {
   return g_r;
 }
 
+// Returns the type of graph
+enum graph_type graph_type(graph_t *g) {
+  return g->type;
+}
+
 // Prints the contents of the graph to stdout.
 void graph_print(graph_t *g) {
   printf("%d vertices, %d edges\n", g->V, g->E);

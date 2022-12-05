@@ -42,6 +42,9 @@ bool graph_adj_iter_has_next(graph_t *g, int v);
 // otherwise.
 bool graph_adj_iter_next(graph_t *g, int v, int *w);
 
+// Returns the type of graph
+enum graph_type graph_type(graph_t *g);
+
 // Prints the contents of the graph to stdout.
 void graph_print(graph_t *g);
 

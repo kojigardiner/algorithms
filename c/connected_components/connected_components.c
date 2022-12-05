@@ -1,7 +1,7 @@
 // Implementation for finding connected components in a graph. If the graph is 
 // a digraph, uses the Kosaraju-Sharir algorithm to find strongly connected
-// components instead.
-// 
+// components instead. Both method use DFS starting at each unmarked vertex.
+//
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
 #include <stdio.h>

@@ -1,6 +1,6 @@
 // Interface for finding connected components in a graph. If the graph is a 
 // digraph, finds strongly connected components instead.
-// 
+//
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
 #pragma once

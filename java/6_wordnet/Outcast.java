@@ -30,6 +30,7 @@ public class Outcast {
                 currDist += wn.distance(n1, n2);
             }
             if (currDist > maxDist) {
+                maxDist = currDist;
                 outcast = n1;
             }
         }

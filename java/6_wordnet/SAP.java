@@ -63,7 +63,10 @@ public class SAP {
             bfsW = new BreadthFirstDirectedPaths(g, w);
         }
         catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("failed bfs");
+            AncestorAndDist ret = new AncestorAndDist();
+            ret.ancestor = -1;
+            ret.dist = -1;
+            return ret;
         }
         int minDist = g.V();    // set to max distance to start
         int currDist = -1;

@@ -8,16 +8,33 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 
 public class Outcast {
+    private final WordNet wn;
+
     // constructor takes a WordNet object
     public Outcast(WordNet wordnet) {
         if (wordnet == null) {
             throw new IllegalArgumentException("null arg was passed");
         }
+
+        wn = wordnet;
     }
 
     // given an array of WordNet nouns, return an outcast
     public String outcast(String[] nouns) {
-        return "";
+        int maxDist = -1;
+        int currDist;
+        String outcast = "";
+        for (String n1 : nouns) {
+            currDist = 0;
+            for (String n2 : nouns) {
+                currDist += wn.distance(n1, n2);
+            }
+            if (currDist > maxDist) {
+                outcast = n1;
+            }
+        }
+
+        return outcast;
     }
 
     // The following test client takes from the command line the name of a

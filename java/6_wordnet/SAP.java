@@ -44,6 +44,9 @@ public class SAP {
             }
         }
 
+        if (ancestor == -1) {
+            minDist = -1;
+        }
         AncestorAndDist ret = new AncestorAndDist();
         ret.ancestor = ancestor;
         ret.dist = minDist;
@@ -59,7 +62,7 @@ public class SAP {
             bfsV = new BreadthFirstDirectedPaths(g, v);
             bfsW = new BreadthFirstDirectedPaths(g, w);
         }
-        catch (java.lang.IllegalArgumentException e) {
+        catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("failed bfs");
         }
         int minDist = g.V();    // set to max distance to start
@@ -75,6 +78,9 @@ public class SAP {
             }
         }
 
+        if (ancestor == -1) {
+            minDist = -1;
+        }
         AncestorAndDist ret = new AncestorAndDist();
         ret.ancestor = ancestor;
         ret.dist = minDist;

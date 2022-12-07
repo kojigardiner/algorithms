@@ -14,8 +14,8 @@ import java.util.ArrayList;
 
 public class WordNet {
     private final ST<String, ArrayList<Integer>> st; // key = noun, value = synset ids
-    private final ArrayList<String> synsetList;    // id indexed synsets
-    private SAP sapObj;
+    private final ArrayList<String> synsetList;      // id indexed synsets
+    private final SAP sapObj;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {

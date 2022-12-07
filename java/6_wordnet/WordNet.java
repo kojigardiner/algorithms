@@ -13,7 +13,7 @@ import edu.princeton.cs.algs4.StdOut;
 import java.util.ArrayList;
 
 public class WordNet {
-    private ST<String, Integer> st; // key = noun, value = synset id
+    private ST<String, ArrayList<Integer>> st; // key = noun, value = synset ids
     private Digraph g;  // digraph of synset ids connected by hypernym edges
 
     // constructor takes the name of the two input files
@@ -22,7 +22,7 @@ public class WordNet {
             throw new IllegalArgumentException("null arg was passed");
         }
 
-        st = new ST<String, Integer>();
+        st = new ST<String, ArrayList<Integer>>();
 
         In in = new In(synsets);
         int id = 0;
@@ -32,7 +32,12 @@ public class WordNet {
             id = Integer.parseInt(elems[0]);
             String[] currSynset = elems[1].split(" ");
             for (int i = 0; i < currSynset.length; i++) {
-                st.put(currSynset[i], id);
+                ArrayList<Integer> ids = st.get(currSynset[i]);
+                if (ids == null) {
+                    ids = new ArrayList<Integer>();
+                }
+                ids.add(id);
+                st.put(currSynset[i], ids);
             }
         }
 

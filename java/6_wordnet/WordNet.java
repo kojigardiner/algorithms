@@ -13,8 +13,9 @@ import edu.princeton.cs.algs4.StdOut;
 import java.util.ArrayList;
 
 public class WordNet {
-    private ST<String, ArrayList<Integer>> st; // key = noun, value = synset ids
-    private Digraph g;  // digraph of synset ids connected by hypernym edges
+    private final ST<String, ArrayList<Integer>> st; // key = noun, value = synset ids
+    private final ArrayList<String> synsetList;    // id indexed synsets
+    private SAP sapObj;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
@@ -23,6 +24,7 @@ public class WordNet {
         }
 
         st = new ST<String, ArrayList<Integer>>();
+        synsetList = new ArrayList<String>();
 
         In in = new In(synsets);
         int id = 0;
@@ -30,6 +32,7 @@ public class WordNet {
             String line = in.readLine();
             String[] elems = line.split(",");
             id = Integer.parseInt(elems[0]);
+            synsetList.add(elems[1]);
             String[] currSynset = elems[1].split(" ");
             for (int i = 0; i < currSynset.length; i++) {
                 ArrayList<Integer> ids = st.get(currSynset[i]);
@@ -41,7 +44,7 @@ public class WordNet {
             }
         }
 
-        g = new Digraph(id + 1);
+        Digraph g = new Digraph(id + 1);
 
         in = new In(hypernyms);
         while (in.hasNextLine()) {
@@ -69,6 +72,8 @@ public class WordNet {
         if (rootsFound != 1) {
             throw new IllegalArgumentException("graph does not have a single root");
         }
+
+        sapObj = new SAP(g);
     }
 
     // returns all WordNet nouns
@@ -98,7 +103,8 @@ public class WordNet {
         if (!(st.contains(nounA) && st.contains(nounB))) {
             throw new IllegalArgumentException("input noun not found in WordNet");
         }
-        return -1;
+
+        return sapObj.length(st.get(nounA), st.get(nounB));
     }
 
     // a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB
@@ -111,7 +117,10 @@ public class WordNet {
         if (!(st.contains(nounA) && st.contains(nounB))) {
             throw new IllegalArgumentException("input noun not found in WordNet");
         }
-        return "";
+
+        int ancestorId = sapObj.ancestor(st.get(nounA), st.get(nounB));
+
+        return synsetList.get(ancestorId);
     }
 
     // do unit testing of this class

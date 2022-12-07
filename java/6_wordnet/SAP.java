@@ -11,7 +11,7 @@ import edu.princeton.cs.algs4.StdIn;
 import edu.princeton.cs.algs4.StdOut;
 
 public class SAP {
-    private Digraph g;
+    private final Digraph g;
 
     private class AncestorAndDist {
         int ancestor;
@@ -23,7 +23,7 @@ public class SAP {
         if (G == null) {
             throw new IllegalArgumentException("null arg was passed");
         }
-        g = G;
+        g = new Digraph(G); // make a copy so that SAP is immutable
     }
 
     // Returns the shortest common ancestor of v and w
@@ -31,13 +31,13 @@ public class SAP {
         // BFS from each source vertex to every other vertex in the graph
         BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(g, v);
         BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(g, w);
-        int minDist = -1;
+        int minDist = g.V();    // set to max distance to start
         int currDist = -1;
         int ancestor = -1;
         for (int s = 0; s < g.V(); s++) {
             if (bfsV.hasPathTo(s) && bfsW.hasPathTo(s)) {
                 currDist = bfsV.distTo(s) + bfsW.distTo(s);
-                if ((currDist < minDist) || minDist == -1) {
+                if (currDist < minDist) {
                     minDist = currDist;
                     ancestor = s;
                 }
@@ -53,15 +53,22 @@ public class SAP {
 
     private AncestorAndDist findAncestorAndDist(Iterable<Integer> v, Iterable<Integer> w) {
         // BFS from each source vertex to every other vertex in the graph
-        BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(g, v);
-        BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(g, w);
-        int minDist = -1;
+        BreadthFirstDirectedPaths bfsV;
+        BreadthFirstDirectedPaths bfsW;
+        try {
+            bfsV = new BreadthFirstDirectedPaths(g, v);
+            bfsW = new BreadthFirstDirectedPaths(g, w);
+        }
+        catch (java.lang.IllegalArgumentException e) {
+            throw new IllegalArgumentException("failed bfs");
+        }
+        int minDist = g.V();    // set to max distance to start
         int currDist = -1;
         int ancestor = -1;
         for (int s = 0; s < g.V(); s++) {
             if (bfsV.hasPathTo(s) && bfsW.hasPathTo(s)) {
                 currDist = bfsV.distTo(s) + bfsW.distTo(s);
-                if ((currDist < minDist) || minDist == -1) {
+                if (currDist < minDist) {
                     minDist = currDist;
                     ancestor = s;
                 }
@@ -79,7 +86,7 @@ public class SAP {
     public int length(int v, int w) {
         // Check if vertex is outside prescribed range
         if (v < 0 || w < 0 || v > g.V() - 1 || w > g.V() - 1) {
-            return -1;
+            throw new IllegalArgumentException("vertex out of bounds");
         }
 
         AncestorAndDist a = findAncestorAndDist(v, w);
@@ -90,7 +97,7 @@ public class SAP {
     public int ancestor(int v, int w) {
         // Check if vertex is outside prescribed range
         if (v < 0 || w < 0 || v > g.V() - 1 || w > g.V() - 1) {
-            return -1;
+            throw new IllegalArgumentException("vertex out of bounds");
         }
 
         AncestorAndDist a = findAncestorAndDist(v, w);

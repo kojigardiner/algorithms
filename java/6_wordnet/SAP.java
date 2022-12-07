@@ -63,10 +63,15 @@ public class SAP {
             bfsW = new BreadthFirstDirectedPaths(g, w);
         }
         catch (IllegalArgumentException e) {
-            AncestorAndDist ret = new AncestorAndDist();
-            ret.ancestor = -1;
-            ret.dist = -1;
-            return ret;
+            if (e.getMessage().equals("zero vertices")) {
+                AncestorAndDist ret = new AncestorAndDist();
+                ret.ancestor = -1;
+                ret.dist = -1;
+                return ret;
+            }
+            else {
+                throw e;
+            }
         }
         int minDist = g.V();    // set to max distance to start
         int currDist = -1;

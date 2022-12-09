@@ -77,6 +77,11 @@ int edge_compare(edge_t *e1, edge_t *e2) {
   }
 }
 
+// Prints the edge vertices and weight.
+void edge_print(edge_t *e) {
+  printf("%d-%d(%.2lf)\n", e->v, e->w, e->weight);
+}
+
 // Frees memory associated with the edge.
 void edge_free(edge_t *e) {
   free(e);

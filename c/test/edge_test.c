@@ -57,6 +57,14 @@ void test_edge_compare_negative() {
   TEST_ASSERT_EQUAL(1, edge_compare(e2, e1));
 }
 
+void test_edge_print() {
+  edge_t *e1 = edge_init(2, 3, -0.5);
+  edge_t *e2 = edge_init(4, 99, 0.1);  
+
+  edge_print(e1);
+  edge_print(e2);
+}
+
 // Test edge_free
 void test_edge_free() {
   edge_t *e = edge_init(4, 99, 0.1);
@@ -71,6 +79,7 @@ int main() {
   RUN_TEST(test_edge_compare_unequal);
   RUN_TEST(test_edge_compare_equal);
   RUN_TEST(test_edge_compare_negative);
+  RUN_TEST(test_edge_print);
   RUN_TEST(test_edge_free);
   return UNITY_END();
 }

@@ -1,7 +1,12 @@
 // Implementation for finding connected components in a graph. If the graph is 
 // a digraph, uses the Kosaraju-Sharir algorithm to find strongly connected
-// components instead. Both method use DFS starting at each unmarked vertex.
+// components instead. Both methods use DFS starting at each unmarked vertex.
 //
+// The Kosaraju-Sharir algorithm uses the following steps:
+//    1. Find the reverse graph
+//    2. Compute the reverse post order of the reverse graph
+//    3. Run DFS on the vertices in the reverse postorder
+// 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
 #include <stdio.h>

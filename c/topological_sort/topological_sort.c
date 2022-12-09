@@ -1,4 +1,11 @@
-// Implementation for performing topological sort on a graph.
+// Implementation for performing topological sort on a graph. Topological sort
+// involves sorting the vertices of a directed graph such that all edges "point"
+// upward. This is akin to solving an ordering problem with precedence
+// constraints.
+// 
+// The algorithm visits each vertex via depth-first search, and pushes it onto
+// a stack *after* the recursive DFS call returns. This "post-order" stack can
+// then be iterated over to provide the topological order.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 

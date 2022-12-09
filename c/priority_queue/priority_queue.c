@@ -10,11 +10,15 @@
 // calling the swim() function to repeatedly compare the new element against
 // that of its parent, and exchanging elements if they are not in proper order.
 //
-// Removing the MAX element involves exchanging the last and first elements in 
-// the tree, returning the previous first element, then repeatedly calling the
-// sink function on the new first element, comparing it against both of its
-// children and if the element is smaller, exchanging it with the larger of its 
-// two children, repeating this process until the elements are in proper order.
+// This implementation support both MAX and MIN oriented priority queues by
+// accepting a type parameter when initializing the priority queue.
+//
+// Removing the MIN or MAX element involves exchanging the last and first 
+// elements in the tree, returning the previous first element, then repeatedly 
+// calling the sink function on the new first element, comparing it against both 
+// of its children and if the element is smaller, exchanging it with the larger 
+// of its  two children, repeating this process until the elements are in proper 
+// order.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
@@ -23,6 +27,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// Private function
+bool pq_less(pq_t *pq, void *a, void *b);
+
 // Generic priority_queue data type.
 typedef struct pq {
   size_t max;                     // maximum size of pq
@@ -30,6 +37,7 @@ typedef struct pq {
   size_t item_size;               // size of each item in pq
   bool (*less)(void *, void *);   // comparison function pointer
   void *items;                    // array of items
+  enum pq_type type;              // MIN or MAX
 } pq_t;
 
 // Helper functions
@@ -38,11 +46,11 @@ void sink(pq_t *pq, int idx);
 void swim(pq_t *pq, int idx);
 void pq_print(pq_t *pq);
 
-// Creates an empty MAX priority queue that holds n elements of a given
+// Creates an empty priority queue that holds n elements of a given
 // item_size, and uses the less function to compare them.
 // Returns a pointer to the priority queue. Must call pq_free() when finished 
 // using the priority queue.
-pq_t *max_pq_init(size_t item_size, size_t max, bool (*less)(void *, void *)) {
+pq_t *pq_init(size_t item_size, size_t max, enum pq_type type, bool (*less)(void *, void *)) {
   pq_t *pq = malloc(sizeof(pq_t));
   if (!pq) {
     printf("Failed to malloc pq\n");
@@ -59,6 +67,8 @@ pq_t *max_pq_init(size_t item_size, size_t max, bool (*less)(void *, void *)) {
     exit(1);
   }
 
+  pq->type = type;
+
   return pq;
 }
 
@@ -67,7 +77,7 @@ pq_t *max_pq_init(size_t item_size, size_t max, bool (*less)(void *, void *)) {
 // heap-ordered position, where it is smaller than or equal to its parent.
 void swim(pq_t *pq, int idx) {
   int parent_idx = idx / 2;
-  while (idx > 1 && pq->less(pq->items + parent_idx * pq->item_size, pq->items + idx * pq->item_size)) {
+  while (idx > 1 && pq_less(pq, pq->items + parent_idx * pq->item_size, pq->items + idx * pq->item_size)) {
     exchange(pq, idx, parent_idx);
     idx = parent_idx;
     parent_idx = idx / 2;
@@ -84,7 +94,7 @@ void sink(pq_t *pq, int idx) {
   while (idx * 2 <= pq->n) {
     // Only one child to worry about
     if (child_idx2 > pq->n) {
-      if (!pq->less(pq->items + child_idx1 * pq->item_size, pq->items + idx * pq->item_size)) {
+      if (!pq_less(pq, pq->items + child_idx1 * pq->item_size, pq->items + idx * pq->item_size)) {
         exchange(pq, idx, child_idx1);
         idx = child_idx1;
       } else {
@@ -93,16 +103,16 @@ void sink(pq_t *pq, int idx) {
     // Need to check against largest child
     } else {
       // child2 is larger
-      if (pq->less(pq->items + child_idx1 * pq->item_size, pq->items + child_idx2 * pq->item_size)) {
+      if (pq_less(pq, pq->items + child_idx1 * pq->item_size, pq->items + child_idx2 * pq->item_size)) {
         // Compare against child2
-        if (!pq->less(pq->items + child_idx2 * pq->item_size, pq->items + idx * pq->item_size)) {
+        if (!pq_less(pq, pq->items + child_idx2 * pq->item_size, pq->items + idx * pq->item_size)) {
           exchange(pq, idx, child_idx2);
           idx = child_idx2;
         } else {
           break;
         }
       // child 1 is larger, so compare against it
-      } else if (!pq->less(pq->items + child_idx1 * pq->item_size, pq->items + idx * pq->item_size)) {
+      } else if (!pq_less(pq, pq->items + child_idx1 * pq->item_size, pq->items + idx * pq->item_size)) {
         exchange(pq, idx, child_idx1);
         idx = child_idx1;
       } else {
@@ -145,7 +155,7 @@ bool pq_insert(pq_t *pq, void *item) {
 // Finds the item with the max value from the priority queue and copies it to
 // the memory address of item.
 // Returns true if successful, false otherwise.
-bool pq_max(pq_t *pq, void *item) {
+bool pq_front(pq_t *pq, void *item) {
   if (pq_is_empty(pq)) {
     return false;
   }
@@ -157,7 +167,7 @@ bool pq_max(pq_t *pq, void *item) {
 // Removes the item with the max value from the priority queue and copies it to
 // the memory address of item.
 // Returns true if successful, false otherwise.
-bool pq_del_max(pq_t *pq, void *item) {
+bool pq_del(pq_t *pq, void *item) {
   if (pq_is_empty(pq)) {
     return false;
   }
@@ -200,4 +210,16 @@ void pq_print(pq_t *pq) {
     printf("%c ", *(char *)(pq->items + i * pq->item_size));
   }
   printf("\n");
+}
+
+// Wrapper function that returns the proper result for the "less" function
+// depending on if this is a MIN or MAX priority queue.
+bool pq_less(pq_t *pq, void *a, void *b) {
+  bool result = pq->less(a, b);
+
+  if (pq->type == MAX) {
+    return result;
+  } else {
+    return !result;
+  }
 }

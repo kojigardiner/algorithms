@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   }
   int num_files = argc - 1;
 
-  pq_t *pq = max_pq_init(sizeof(char_index_t), num_files, greater_char_index);
+  pq_t *pq = pq_init(sizeof(char_index_t), num_files, MAX, greater_char_index);
   FILE *fp[num_files];
   char c;
   
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   // Remove items in order
   while (!pq_is_empty(pq)) {
     char_index_t ci;
-    pq_del_max(pq, &ci);
+    pq_del(pq, &ci);
     printf("%c\n", ci.c);
     int idx = ci.i;
     

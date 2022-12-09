@@ -17,7 +17,16 @@ enum graph_type {
 };
 
 // Creates and returns a pointer to a new graph with num_v vertices.
-graph_t *graph_init(int num_v, enum graph_type);
+graph_t *graph_init(int num_v, enum graph_type type);
+
+// Creates a graph given an input file with the following format:
+// num_vertices
+// num_edges
+// v1 w1
+// v2 w2
+// v3 w3
+// ...
+graph_t *graph_init_file(char *filename, enum graph_type type); 
 
 // Returns a new graph that has the edges reversed. Should only be called on a 
 // directed graph, on an undirected graph returns NULL.

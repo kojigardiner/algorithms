@@ -8,6 +8,8 @@
 // num vertices
 // num edges
 // v w
+static bool init_with_file = false;
+static char *filename = "../data/tinyG.txt";
 static const int num_v = 13;
 static const int num_e = 13;
 static const int connections[num_e][2] = {{0, 5}, {4, 3}, {0, 1}, {9, 12}, \
@@ -19,7 +21,11 @@ static const int connections[num_e][2] = {{0, 5}, {4, 3}, {0, 1}, {9, 12}, \
 graph_t *g;
 
 void setUp() {
-  g = graph_init(num_v, UNDIRECTED);
+  if (!init_with_file) {
+    g = graph_init(num_v, UNDIRECTED);
+  } else {
+    g = graph_init_file(filename, UNDIRECTED);
+  }
 }
 
 void tearDown() {
@@ -30,8 +36,10 @@ void tearDown() {
 
 // Helper function, fills graph
 void fill_graph() {
-  for (int i = 0; i < num_e; i++) {
-    TEST_ASSERT_TRUE(graph_add_edge(g, connections[i][0], connections[i][1]));
+  if (!init_with_file) {
+    for (int i = 0; i < num_e; i++) {
+      TEST_ASSERT_TRUE(graph_add_edge(g, connections[i][0], connections[i][1]));
+    }
   }
 }
 
@@ -48,15 +56,19 @@ void test_vertex_count() {
 
 // Tests number of edges is correct.
 void test_edge_count() {
-  TEST_ASSERT_EQUAL(0, graph_E(g));
-  fill_graph();
+  if (!init_with_file) {
+    TEST_ASSERT_EQUAL(0, graph_E(g));
+    fill_graph();
+  }
   TEST_ASSERT_EQUAL(num_e, graph_E(g));
 }
 
 // Test adjacent iterator failure
 void test_adj_iter_empty() {
-  TEST_ASSERT_FALSE(graph_adj_iter_init(g, 0));
-  TEST_ASSERT_FALSE(graph_adj_iter_init(g, 13));
+  if (!init_with_file) {
+    TEST_ASSERT_FALSE(graph_adj_iter_init(g, 0));
+    TEST_ASSERT_FALSE(graph_adj_iter_init(g, 13));
+  }
 }
 
 // Test adjacent iterator. Note that the order of values assumes the underlying 
@@ -112,8 +124,10 @@ void test_adj_iter_repeat() {
 
 // Tests the adjacent iterator on an unconnected vertex
 void test_adj_iter_unconnected() {
-  int v = 0;
-  TEST_ASSERT_FALSE(graph_adj_iter_init(g, v));
+  if (!init_with_file) {
+    int v = 0;
+    TEST_ASSERT_FALSE(graph_adj_iter_init(g, v));
+  }
 }
 
 // Tests the adjacent iterator with out of bounds values.
@@ -155,18 +169,24 @@ void test_reverse_undirected() {
 // Main
 int main() {
   UNITY_BEGIN();
-  
-  RUN_TEST(test_empty_graph_fails);
-  RUN_TEST(test_vertex_count);
-  RUN_TEST(test_edge_count);
-  RUN_TEST(test_adj_iter_empty);
-  RUN_TEST(test_adj_iter);
-  RUN_TEST(test_adj_iter_repeat);
-  RUN_TEST(test_adj_iter_unconnected);
-  RUN_TEST(test_adj_iter_out_of_bounds);
-  RUN_TEST(test_add_edge_out_of_bounds);
-  RUN_TEST(test_print);
-  RUN_TEST(test_reverse_undirected);
+
+  // Run test once with regular init, and second time with init with file  
+  for (int i = 0; i < 2; i++) {
+    if (i == 1) {
+      init_with_file = true;
+    }
+    RUN_TEST(test_empty_graph_fails);
+    RUN_TEST(test_vertex_count);
+    RUN_TEST(test_edge_count);
+    RUN_TEST(test_adj_iter_empty);
+    RUN_TEST(test_adj_iter);
+    RUN_TEST(test_adj_iter_repeat);
+    RUN_TEST(test_adj_iter_unconnected);
+    RUN_TEST(test_adj_iter_out_of_bounds);
+    RUN_TEST(test_add_edge_out_of_bounds);
+    RUN_TEST(test_print);
+    RUN_TEST(test_reverse_undirected);
+  }
 
   return UNITY_END();
 }

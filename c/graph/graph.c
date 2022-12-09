@@ -47,6 +47,53 @@ graph_t *graph_init(int num_v, enum graph_type type) {
   return g;
 }
 
+// Creates a graph given an input file with the following format:
+// num_vertices
+// num_edges
+// v1 w1
+// v2 w2
+// v3 w3
+// ...
+graph_t *graph_init_file(char *filename, enum graph_type type) {
+  FILE *fp = fopen(filename, "r");
+  
+  // Read the size of the graph from the file
+  int num_v, num_e;
+  int ret = fscanf(fp, "%d", &num_v);
+  if (ret != 1) {
+    printf("Failed to read input file!\n");
+    exit(EXIT_FAILURE);
+  }
+  ret = fscanf(fp, "%d", &num_e);
+  if (ret != 1) {
+    printf("Failed to read input file!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (num_v <= 0 || num_e <= 0) {
+    return NULL;
+  }
+
+  // Initialize the graph
+  graph_t *g = graph_init(num_v, type);
+
+  // Fill the graph
+  int v, w;
+  for (int i = 0; i < num_e; i++) {
+    ret = fscanf(fp, "%d %d", &v, &w);
+    if (ret != 2) {
+      printf("Failed to read input file!\n");
+      exit(EXIT_FAILURE);
+    }
+    if (!graph_add_edge(g, v, w)) {
+      printf("Failed to add edge!\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  return g;
+}
+
 // Returns the number of vertices in the graph.
 int graph_V(graph_t *g) {
   return g->V;

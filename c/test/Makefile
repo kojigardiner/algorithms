@@ -5,11 +5,19 @@ UNITY_PATH := ../../../Unity/src
 
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
-cycle_test top_sort_test cc_test edge_test
+cycle_test top_sort_test cc_test edge_test weighted_graph_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Weighted graph
+weighted_graph_test: lib.o weighted_graph_test.o weighted_graph.o unity.o bag.o edge.o
+	@echo Compiling weighted_graph_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+weighted_graph.o: $(ALGORITHMS_PATH)/weighted_graph/weighted_graph.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Edge
 edge_test: lib.o unity.o edge_test.o edge.o

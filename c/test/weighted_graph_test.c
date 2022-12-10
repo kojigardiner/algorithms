@@ -97,7 +97,7 @@ void test_adj_iter() {
 
     TEST_ASSERT_EQUAL(expectedV[i], v_check);
     TEST_ASSERT_EQUAL(expectedW[i], w_check);
-    TEST_ASSERT_EQUAL(expectedWeight[i], weight_check);
+    TEST_ASSERT_EQUAL_DOUBLE(expectedWeight[i], weight_check);
     i++;
   }
 
@@ -115,7 +115,7 @@ void test_adj_iter() {
 
     TEST_ASSERT_EQUAL(expectedV2[i], v_check);
     TEST_ASSERT_EQUAL(expectedW2[i], w_check);
-    TEST_ASSERT_EQUAL(expectedWeight2[i], weight_check);
+    TEST_ASSERT_EQUAL_DOUBLE(expectedWeight2[i], weight_check);
     i++;
   }
 }
@@ -141,7 +141,7 @@ void test_adj_iter_repeat() {
 
     TEST_ASSERT_EQUAL(expectedV[i], v_check);
     TEST_ASSERT_EQUAL(expectedW[i], w_check);
-    TEST_ASSERT_EQUAL(expectedWeight[i], weight_check);
+    TEST_ASSERT_EQUAL_DOUBLE(expectedWeight[i], weight_check);
     i++;
   }
 
@@ -155,7 +155,7 @@ void test_adj_iter_repeat() {
 
     TEST_ASSERT_EQUAL(expectedV[i], v_check);
     TEST_ASSERT_EQUAL(expectedW[i], w_check);
-    TEST_ASSERT_EQUAL(expectedWeight[i], weight_check);
+    TEST_ASSERT_EQUAL_DOUBLE(expectedWeight[i], weight_check);
     i++;
   }
 }
@@ -199,23 +199,27 @@ void test_edge_iter() {
   TEST_ASSERT_TRUE(weighted_graph_edge_iter_init(g));
 
   edge_t *e;
-  int v_check, w_check;
-  double weight_check;
+  // int v_check, w_check;
+  // double weight_check;
 
-  int expectedV[] = {6, 0, 0, 0, 1, 1, 1, 1, 6, 2, 1, 0, 2, 3, 1, 2, 6, 0, 4, 4, 1, 5, 4, 6, 6, 3, 6, 2, 1, 0, 5, 4};
-  int expectedW[] = {0, 2, 4, 7, 3, 2, 7, 5, 2, 7, 2, 2, 3, 6, 3, 3, 4, 4, 7, 5, 5, 7, 5, 4, 0, 6, 2, 7, 7, 7, 7, 7};
-  double expectedWeight[] = {.58, .26, .38, .16, .29, .36, .19, .32, .40, .34, .36, .26, .17, .52, .29, .17, .93, .38, .37, .35, .32, .28, .35, .93, .58, .52, .40, .34, .19, .16, .28, .37};
-  int i = 0;
+  // int num_e = weighted_graph_E(g) * 2;
+
+  // int expectedV[] = {0, 0, 0, 1, 1, 1, 1, 2, 1, 0, 2, 3, 1, 2, 0, 4, 4, 1, 5, 4, 3, 2, 1, 0, 5, 4};
+  // int expectedW[] = {2, 4, 7, 3, 2, 7, 5, 7, 2, 2, 3, 6, 3, 3, 4, 7, 5, 5, 7, 5, 6, 7, 7, 7, 7, 7};
+  // double expectedWeight[] = {.26, .38, .16, .29, .36, .19, .32, .40, .34, .36, .26, .17, .52, .29, .17, .93, .38, .37, .35, .32, .28, .35, .93, .58, .52, .40, .34, .19, .16, .28, .37};
+  // int i = 0;
   while (weighted_graph_edge_iter_has_next(g)) {
     weighted_graph_edge_iter_next(g, &e);
-    v_check = edge_either(e);
-    w_check = edge_other(e, v_check);
-    weight_check = edge_weight(e);
+    // v_check = edge_either(e);
+    // w_check = edge_other(e, v_check);
+    // weight_check = edge_weight(e);
 
-    TEST_ASSERT_EQUAL(expectedV[i], v_check);
-    TEST_ASSERT_EQUAL(expectedW[i], w_check);
-    TEST_ASSERT_EQUAL(expectedWeight[i], weight_check);
-    i++;
+    edge_print(e);
+
+    // TEST_ASSERT_EQUAL(expectedV[num_e-i-1], v_check);
+    // TEST_ASSERT_EQUAL(expectedW[num_e-i-1], w_check);
+    // TEST_ASSERT_EQUAL_DOUBLE(expectedWeight[num_e-i-1], weight_check);
+    // i++;
   }
 }
 
@@ -248,6 +252,7 @@ int main() {
     RUN_TEST(test_adj_iter_out_of_bounds);
     RUN_TEST(test_add_edge_out_of_bounds);
     RUN_TEST(test_print);
+    RUN_TEST(test_edge_iter);
     // RUN_TEST(test_reverse_undirected);
   }
 

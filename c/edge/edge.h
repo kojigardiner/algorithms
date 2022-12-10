@@ -35,6 +35,10 @@ double edge_weight(edge_t *e);
 // Comparison function for two edges, returns -1 if e1 is less than e2, 0 if
 // they are the same, or +1 if e1 is larger than e2.
 int edge_compare(edge_t *e1, edge_t *e2);
+bool edge_less(void *e1, void *e2);
+
+// Prints the edge vertices and weight.
+void edge_print(edge_t *e);
 
 // Frees memory associated with the edge.
 void edge_free(edge_t *e);

@@ -77,6 +77,13 @@ int edge_compare(edge_t *e1, edge_t *e2) {
   }
 }
 
+// Comparison function using edge_compare for functions that require a "less"
+// comparator.
+bool edge_less(void *e1, void *e2) {
+  
+  return (edge_compare(*(edge_t **)e1, *(edge_t **)e2) < 0);
+}
+
 // Prints the edge vertices and weight.
 void edge_print(edge_t *e) {
   printf("%d-%d(%.2lf)\n", e->v, e->w, e->weight);

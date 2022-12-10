@@ -43,7 +43,7 @@ weighted_graph_t *weighted_graph_init(int num_v, enum weighted_graph_type type) 
     g->adj[i] = bag_init(sizeof(edge_t *));
   }
 
-  g->edges = NULL;
+  g->edges = bag_init(sizeof(edge_t *));
 
   g->type = type;
 
@@ -180,18 +180,16 @@ bool weighted_graph_adj_iter_next(weighted_graph_t *g, int v, edge_t **e) {
 // Initializes an iterator. Returns true if successful, false otherwise.
 bool weighted_graph_edge_iter_init(weighted_graph_t *g) {
   // Fill g->edges
-  g->edges = bag_init(sizeof(edge_t *));
-
   edge_t *e;
   for (int i = 0; i < weighted_graph_V(g); i++) {
     bag_iter_init(g->adj[i]);
     while (bag_iter_has_next(g->adj[i])) {
       bag_iter_next(g->adj[i], &e);
-      bag_add(g->edges, &e);
+      if (edge_other(e, i) > i) { // only add one copy of the edge
+        bag_add(g->edges, &e);
+      }
     }
   }
-
-  bag_free(g->edges);
 
   return bag_iter_init(g->edges);
 }
@@ -277,7 +275,9 @@ void weighted_graph_free(weighted_graph_t *g) {
     }
     bag_free(g->adj[i]);
   }
-  
+
+  bag_free(g->edges);
+
   // Free the list of bags
   free(g->adj);
 

@@ -5,11 +5,20 @@ UNITY_PATH := ../../../Unity/src
 
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
-cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test
+cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test \
+shortest_paths_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Shortest paths
+shortest_paths_test: lib.o shortest_paths_test.o shortest_paths.o unity.o weighted_graph.o bag.o edge.o priority_queue.o stack.o
+	@echo Compiling mst_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+shortest_paths.o: $(ALGORITHMS_PATH)/shortest_paths/shortest_paths.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # MST
 mst_test: lib.o mst_test.o mst.o unity.o weighted_graph.o bag.o edge.o priority_queue.o uf.o

@@ -65,24 +65,32 @@ public class SeamCarver {
                 // First row
                 if (y == 0) {
                     distTo[x][y] = energy[x][y];
-                    edgeTo[x][y] = -1;
-
-                }
-                // First/last col
-                else if (x == 0 || x == width - 1) {
-                    distTo[x][y] = distTo[x][y - 1] + energy[x][y];
                     edgeTo[x][y] = x;
+
                 }
                 else {
                     double a, b, c;
-                    a = distTo[x - 1][y - 1] + energy[x][y];
+
+                    if (x == 0) {
+                        a = Double.POSITIVE_INFINITY;
+                    }
+                    else {
+                        a = distTo[x - 1][y - 1] + energy[x][y];
+                    }
                     b = distTo[x][y - 1] + energy[x][y];
-                    c = distTo[x + 1][y - 1] + energy[x][y];
-                    if (a < b && a < c) {
+
+                    if (x == width - 1) {
+                        c = Double.POSITIVE_INFINITY;
+                    }
+                    else {
+                        c = distTo[x + 1][y - 1] + energy[x][y];
+                    }
+
+                    if (a <= b && a <= c) {
                         edgeTo[x][y] = x - 1;
                         distTo[x][y] = a;
                     }
-                    else if (b < a && b < c) {
+                    else if (b <= a && b <= c) {
                         edgeTo[x][y] = x;
                         distTo[x][y] = b;
                     }
@@ -126,7 +134,7 @@ public class SeamCarver {
         if (seam == null) {
             throw new IllegalArgumentException("argument cannot be null");
         }
-        if (!checkSeam(seam, this.picture.width())) {
+        if (!checkSeam(seam, this.picture.width()),this.picture.height()){
             throw new IllegalArgumentException("invalid seam");
         }
         if (picture.height() <= 1) {
@@ -152,7 +160,7 @@ public class SeamCarver {
         if (seam == null) {
             throw new IllegalArgumentException("argument cannot be null");
         }
-        if (!checkSeam(seam, this.picture.height())) {
+        if (!checkSeam(seam, this.picture.height()),this.picture.width()){
             throw new IllegalArgumentException("invalid seam");
         }
         if (picture.width() <= 1) {
@@ -174,12 +182,15 @@ public class SeamCarver {
     }
 
     // Checks if a seam is valid
-    private boolean checkSeam(int[] seam, int maxCoord) {
-        if (seam.length != maxCoord) {
+    private boolean checkSeam(int[] seam, int maxLength, int maxCoord) {
+        if (seam.length != maxLength) {
             return false;
         }
         for (int i = 1; i < seam.length; i++) {
             if (Math.abs(seam[i] - seam[i - 1]) > 1) {
+                return false;
+            }
+            if (seam[i] < 0 || seam[i] >= maxCoord) {
                 return false;
             }
         }

@@ -134,7 +134,7 @@ public class SeamCarver {
         if (seam == null) {
             throw new IllegalArgumentException("argument cannot be null");
         }
-        if (!checkSeam(seam, this.picture.width()),this.picture.height()){
+        if (!checkSeam(seam, this.picture.width(), this.picture.height())) {
             throw new IllegalArgumentException("invalid seam");
         }
         if (picture.height() <= 1) {
@@ -160,7 +160,7 @@ public class SeamCarver {
         if (seam == null) {
             throw new IllegalArgumentException("argument cannot be null");
         }
-        if (!checkSeam(seam, this.picture.height()),this.picture.width()){
+        if (!checkSeam(seam, this.picture.height(), this.picture.width())) {
             throw new IllegalArgumentException("invalid seam");
         }
         if (picture.width() <= 1) {

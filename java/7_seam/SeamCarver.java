@@ -21,7 +21,7 @@ public class SeamCarver {
 
     // current picture
     public Picture picture() {
-        return this.picture;
+        return new Picture(this.picture);
     }
 
     // width of current picture
@@ -186,9 +186,11 @@ public class SeamCarver {
         if (seam.length != maxLength) {
             return false;
         }
-        for (int i = 1; i < seam.length; i++) {
-            if (Math.abs(seam[i] - seam[i - 1]) > 1) {
-                return false;
+        for (int i = 0; i < seam.length; i++) {
+            if (i > 0) {
+                if (Math.abs(seam[i] - seam[i - 1]) > 1) {
+                    return false;
+                }
             }
             if (seam[i] < 0 || seam[i] >= maxCoord) {
                 return false;

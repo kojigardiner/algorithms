@@ -6,11 +6,22 @@ UNITY_PATH := ../../../Unity/src
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
 cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test \
-shortest_paths_test
+shortest_paths_test flow_network_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Network flow tests
+flow_network_test: lib.o flow_network_test.o flow_network.o flow_edge.o unity.o bag.o queue.o
+	@echo Compiling flow_network_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+flow_network.o: $(ALGORITHMS_PATH)/flow_network/flow_network.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+flow_edge.o: $(ALGORITHMS_PATH)/flow_edge/flow_edge.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Shortest paths
 shortest_paths_test: lib.o shortest_paths_test.o shortest_paths.o unity.o weighted_graph.o bag.o edge.o priority_queue.o stack.o

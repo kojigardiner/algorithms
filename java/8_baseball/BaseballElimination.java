@@ -104,10 +104,19 @@ public class BaseballElimination {
     // Determines non-trivial elimination by setting up the maxflow problem for
     // a given team x.
     private void calcElimination(int x) {
+        int totalGames = 0;
+        for (int i = 0; i < numTeams; i++) {
+            for (int j = i + 1; j < numTeams; j++) {
+                if (i != x && j != x) {
+                    totalGames++;
+                }
+            }
+        }
+
         // StdOut.printf("Calc elimination of team %d\n", x);
         // Create a new flow network with 2 artificial source/sink vertices,
         // vertices for each game, and vertices for each team.
-        FlowNetwork network = new FlowNetwork(2 + totalRemaining + numTeams);
+        FlowNetwork network = new FlowNetwork(2 + totalGames + numTeams);
 
         // Team indices are 0 through numTeams-1
         // Source and sink indices come next

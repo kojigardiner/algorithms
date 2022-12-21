@@ -16,6 +16,8 @@ import java.util.HashMap;
 public class BaseballElimination {
     private int numTeams;
     private HashMap<String, Integer> teams;
+    private HashMap<Integer, String> teamNames;
+    private HashMap<Integer, ArrayList<Integer>> eliminators;
     private int[] wins;
     private int[] losses;
     private int[] remaining;
@@ -29,17 +31,20 @@ public class BaseballElimination {
         numTeams = in.readInt();
 
         teams = new HashMap<String, Integer>();
+        teamNames = new HashMap<Integer, String>();
         wins = new int[numTeams];
         losses = new int[numTeams];
         remaining = new int[numTeams];
         remainingAgainst = new int[numTeams][numTeams];
         eliminated = new boolean[numTeams];
         totalRemaining = 0;
+        eliminators = new HashMap<Integer, ArrayList<Integer>>();
 
         for (int i = 0; i < numTeams; i++) {
             String team = in.readString();
             // StdOut.printf("%d. %s\n", i, team);
             teams.put(team, i);
+            teamNames.put(i, team);
             wins[i] = in.readInt();
             losses[i] = in.readInt();
             remaining[i] = in.readInt();
@@ -81,7 +86,16 @@ public class BaseballElimination {
             if (i != curFirst) {
                 if (wins[i] + remaining[i] < curMax) {
                     eliminated[i] = true;
-                    StdOut.printf("%d eliminated by %d\n", i, curFirst);
+
+                    ArrayList<Integer> eliminator;
+                    if (!eliminators.containsKey(i)) {
+                        eliminator = new ArrayList<Integer>();
+                    }
+                    else {
+                        eliminator = eliminators.get(i);
+                    }
+                    eliminator.add(curFirst);
+                    eliminators.put(i, eliminator);
                 }
             }
         }
@@ -113,7 +127,7 @@ public class BaseballElimination {
                 // StdOut.println("team to sink: " + e);
                 network.addEdge(e);
                 for (int j = i + 1; j < numTeams; j++) {
-                    if (j != x) {
+                    if (j != x && remainingAgainst[i][j] > 0) {
                         // Add three edges for each game, one from the source to the
                         // game, and one from the game to each possible winner.
                         e = new FlowEdge(source, gameIdx, remainingAgainst[i][j]);
@@ -129,6 +143,8 @@ public class BaseballElimination {
                         network.addEdge(e);
 
                         gameIdx++;
+                        // StdOut.printf("totalRemaining: %d, teams: %d, gameIdx: %d\n",
+                        //               totalRemaining, numTeams, gameIdx);
                     }
                 }
             }
@@ -139,8 +155,17 @@ public class BaseballElimination {
         for (int i = 0; i < numTeams; i++) {
             if (i != x) {
                 if (ff.inCut(i)) {
-                    StdOut.printf("%d eliminated by %d\n", x, i);
                     eliminated[x] = true;
+
+                    ArrayList<Integer> eliminator;
+                    if (!eliminators.containsKey(x)) {
+                        eliminator = new ArrayList<Integer>();
+                    }
+                    else {
+                        eliminator = eliminators.get(x);
+                    }
+                    eliminator.add(i);
+                    eliminators.put(x, eliminator);
                 }
             }
         }
@@ -202,8 +227,15 @@ public class BaseballElimination {
         if (!teams.containsKey(team)) {
             throw new IllegalArgumentException("team does not exist");
         }
+        if (!eliminated[teams.get(team)]) {
+            return null;
+        }
+
         ArrayList<String> cert = new ArrayList<String>();
-        // int idx = teams.get(team);
+        ArrayList<Integer> eliminator = eliminators.get(teams.get(team));
+        for (int i = 0; i < eliminator.size(); i++) {
+            cert.add(teamNames.get(eliminator.get(i)));
+        }
 
         return cert;
     }

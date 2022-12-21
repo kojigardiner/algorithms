@@ -14,16 +14,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class BaseballElimination {
-    private int numTeams;
-    private HashMap<String, Integer> teams;
-    private HashMap<Integer, String> teamNames;
-    private HashMap<Integer, ArrayList<Integer>> eliminators;
-    private int[] wins;
-    private int[] losses;
-    private int[] remaining;
-    private int[][] remainingAgainst;
-    private boolean[] eliminated;
-    private int totalRemaining;
+    private final int numTeams;
+    private final HashMap<String, Integer> teams;
+    private final HashMap<Integer, String> teamNames;
+    private final HashMap<Integer, ArrayList<Integer>> eliminators;
+    private final int[] wins;
+    private final int[] losses;
+    private final int[] remaining;
+    private final int[][] remainingAgainst;
+    private final boolean[] eliminated;
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
@@ -37,7 +36,6 @@ public class BaseballElimination {
         remaining = new int[numTeams];
         remainingAgainst = new int[numTeams][numTeams];
         eliminated = new boolean[numTeams];
-        totalRemaining = 0;
         eliminators = new HashMap<Integer, ArrayList<Integer>>();
 
         for (int i = 0; i < numTeams; i++) {
@@ -48,7 +46,6 @@ public class BaseballElimination {
             wins[i] = in.readInt();
             losses[i] = in.readInt();
             remaining[i] = in.readInt();
-            totalRemaining += remaining[i];
             for (int j = 0; j < numTeams; j++) {
                 remainingAgainst[i][j] = in.readInt();
             }

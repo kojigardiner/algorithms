@@ -16,6 +16,9 @@ enum sort_type {
   MERGE_BU,
   QUICK,
   HEAP,
+  STR_LSD,
+  STR_MSD,
+  STR_THREEWAY_QUICK,
 };
 
 // Sorts an array of generic items of the given item_size, using a pointer to a

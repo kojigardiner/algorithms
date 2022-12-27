@@ -12,16 +12,20 @@ typedef struct custom {
 } custom_t;
 
 static const int count = 10;
+static const int str_count = 13;
 static int int_arr[count];
 static int int_dup_arr[count];
 static float float_arr[count];
 static double double_arr[count];
 static unsigned int uint_arr[count];
 static char *str_arr[count];
+static char *str_arr2[str_count];
+static char *str_arr3[str_count];
 static char char_arr[count];
 static int permutation[count];
 custom_t custom_arr[count];
 enum sort_type types[7] = {SELECTION, INSERTION, SHELL, MERGE_TD, MERGE_BU, QUICK, HEAP};
+enum sort_type str_sort_types[3] = {STR_LSD, STR_MSD, STR_THREEWAY_QUICK};
 
 void setUp() {
   srand(RAND_SEED);   // seed PRNG
@@ -33,6 +37,8 @@ void setUp() {
   double double_data[count] = {0.1, 1.2, 2.4, 3.3, 4.7, 5.3, 6.1, 7.9, 8.1, 9.8};
   unsigned int uint_data[count] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   char *str_data[count] = {"apple", "banana", "carrot", "durian", "eel", "frankfurter", "gelato", "harissa", "icecream", "jam"};
+  char *str_data2[str_count] = {"4PGC938", "2IYE230", "3CIO720", "1ICK750", "1OHV845", "4JZY524", "1ICK750", "3CIO720", "1OHV845", "1OHV845", "2RLA629", "2RLA629", "3ATW723"};
+  char *str_data3[str_count] = {"she", "sells", "seashells", "by", "the", "seashore", "the", "shells", "she", "sells", "are", "surely", "seashells"};
   char char_data[count] = "abcdefghij";
   custom_t custom_data[count] = {{.name = "Alice", .id = 0}, {.name = "Bob", .id = 1}, 
                           {.name = "Charlie", .id = 2}, {.name = "David", .id = 3},
@@ -51,6 +57,11 @@ void setUp() {
     char_arr[i] = char_data[i];
     custom_arr[i] = custom_data[i];
     permutation[i] = permutation_data[i];
+  }
+
+  for (int i = 0; i < str_count; i++) {
+    str_arr2[i] = str_data2[i];
+    str_arr3[i] = str_data3[i];
   }
 }
 
@@ -268,6 +279,22 @@ void test_one_sort() {
   }
 }
 
+void test_dedicated_str_sort() {
+  for (int i = 0; i < NELEMS(str_sort_types); i++) {
+    printf("String sort #%d\n", i);
+    setUp();
+    
+    sort(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str, types[i]);
+    TEST_ASSERT_TRUE(is_sorted(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str));
+
+    sort(str_arr2, sizeof(str_arr2[0]), NELEMS(str_arr2), less_str, str_sort_types[i]);
+    TEST_ASSERT_TRUE(is_sorted(str_arr2, sizeof(str_arr2[0]), NELEMS(str_arr3), less_str));
+    
+    sort(str_arr3, sizeof(str_arr3[0]), NELEMS(str_arr3), less_str, str_sort_types[i]);
+    TEST_ASSERT_TRUE(is_sorted(str_arr3, sizeof(str_arr3[0]), NELEMS(str_arr3), less_str));
+  }
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
@@ -294,6 +321,8 @@ int main() {
   RUN_TEST(test_text_sort);
   RUN_TEST(test_empty_sort);
   RUN_TEST(test_one_sort);
+
+  RUN_TEST(test_dedicated_str_sort);
 
   return UNITY_END();
 }

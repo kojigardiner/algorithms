@@ -21,6 +21,10 @@ void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, vo
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
+void str_lsd_sort(char **arr, size_t n, bool (* less)(void *, void *));
+void str_msd_sort(char **arr, size_t n, bool (* less)(void *, void *));
+void str_threeway_quicksort(char **arr, size_t n, bool (* less)(void *, void *));
+
 // Helper functions
 void exchange(void *arr, size_t item_size, int i, int j);
 void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int mid, int hi, void *aux);
@@ -51,6 +55,15 @@ void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), e
       break;
     case HEAP:
       my_heapsort(arr, item_size, n, less);
+      break;
+    case STR_LSD:
+      str_lsd_sort((char **)arr, n, less);
+      break;
+    case STR_MSD:
+      str_msd_sort((char **)arr, n, less);
+      break;
+    case STR_THREEWAY_QUICK:
+      str_threeway_quicksort((char **)arr, n, less);
       break;
     default:
       perror("Unexpected sort type");
@@ -409,4 +422,92 @@ void shuffle(void *arr, size_t item_size, size_t n) {
   }
 
   free(tmp);
+}
+
+// LSD (least significant digit first) string sort
+// Uses key-indexed counting to sort strings, starting with the right-most
+// character in the string and moving to the left. Best used for sorting strings
+// that are the same length. Assumes a radix of 256 (extended ASCII).
+void str_lsd_sort(char **arr, size_t n, bool (* less)(void *, void *)) {
+  int R = 256;
+
+  // Find the length of the longest string in the list
+  int longest = -1;
+  int curr_len;
+  for (int i = 0; i < n; i++) {
+    curr_len = strlen(arr[i]);
+    longest = curr_len > longest ? curr_len : longest;
+  }
+
+  // Auxiliary array for storing sorted results
+  char **aux = malloc(sizeof(char *) * n);
+  if (!aux) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Frequency count array
+  int *counts = malloc(sizeof(int) * (R + 1));
+  if (!counts) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Iterate over all characters, from right-to-left
+  for (int d = longest; d >= 0; d--) {
+    // Set frequency counts to 0
+    for (int i = 0; i < R + 1; i++) {
+      counts[i] = 0;
+    }
+    
+    // Count the frequency of each character
+    for (int i = 0; i < n; i++) {
+      // Check for shorter strings
+      if (d <= strlen(arr[i])) {
+        counts[arr[i][d] + 1]++;
+      } else {
+        counts[1]++;
+      }
+    }
+
+    // Compute frequency count cumulates by summing the frequencies seen up to
+    // this point.
+    for (int r = 0; r < R; r++) {
+      counts[r + 1] += counts[r];
+    }
+
+    // Sort by cumulates index. On each iteration, check the counts array for
+    // the current character, and use the value there to place the current
+    // string in the aux array. Increment the counts at that index so that the
+    // next occurrence of the same character is placed in the subsequent spot
+    // in the aux array.
+    for (int i = 0; i < n; i++) {
+      // Check for shorter strings
+      if (d <= strlen(arr[i])) {
+        aux[counts[(int)arr[i][d]]++] = arr[i];
+      } else {
+        aux[counts[0]++] = arr[i];
+      }
+    }
+
+    // Copy strings from the aux array back to the original array for the next
+    // pass.
+    for (int i = 0; i < n; i++) {
+      arr[i] = aux[i];
+    }
+  }
+
+  // Free memory
+  free(aux);
+  free(counts);
+}
+
+// MSD string sort
+void str_msd_sort(char **arr, size_t n, bool (* less)(void *, void *)) {
+
+}
+
+// Three-way string quicksort
+void str_threeway_quicksort(char **arr, size_t n, bool (* less)(void *, void *)) {
+
 }

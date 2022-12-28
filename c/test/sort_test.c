@@ -281,7 +281,7 @@ void test_one_sort() {
 
 void test_dedicated_str_sort() {
   for (int i = 0; i < NELEMS(str_sort_types); i++) {
-    printf("String sort #%d\n", i);
+    // printf("String sort #%d\n", i);
     setUp();
     
     sort(str_arr, sizeof(str_arr[0]), NELEMS(str_arr), less_str, types[i]);

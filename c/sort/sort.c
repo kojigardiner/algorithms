@@ -21,9 +21,9 @@ void mergesort_bu(void *arr, size_t item_size, size_t n, bool (*less)(void *, vo
 void my_quicksort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 void my_heapsort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *));
 
-void str_lsd_sort(char **arr, size_t n, bool (* less)(void *, void *));
-void str_msd_sort(char **arr, size_t n, bool (* less)(void *, void *));
-void str_threeway_quicksort(char **arr, size_t n, bool (* less)(void *, void *));
+void str_lsd_sort(char **arr, size_t n);
+void str_msd_sort(char **arr, size_t n);
+void str_threeway_quicksort(char **arr, size_t n);
 
 // Helper functions
 void exchange(void *arr, size_t item_size, int i, int j);
@@ -32,6 +32,8 @@ void mergesort_td_recursive(void *arr, size_t item_size, bool (*less)(void *, vo
 int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
 void my_quicksort_recursive(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi);
 void sink(void *arr, size_t item_size, int idx, size_t n, bool (*less)(void *, void *));
+void str_msd_sort_recursive(char **arr, int lo, int hi, int d, char **aux);
+void str_threeway_quicksort_recursive(char **arr, int lo, int hi, int d);
 
 void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), enum sort_type type) {
   switch (type) {
@@ -57,13 +59,13 @@ void sort(void *arr, size_t item_size, size_t n, bool (*less)(void *, void *), e
       my_heapsort(arr, item_size, n, less);
       break;
     case STR_LSD:
-      str_lsd_sort((char **)arr, n, less);
+      str_lsd_sort((char **)arr, n);
       break;
     case STR_MSD:
-      str_msd_sort((char **)arr, n, less);
+      str_msd_sort((char **)arr, n);
       break;
     case STR_THREEWAY_QUICK:
-      str_threeway_quicksort((char **)arr, n, less);
+      str_threeway_quicksort((char **)arr, n);
       break;
     default:
       perror("Unexpected sort type");
@@ -312,7 +314,7 @@ void sink(void *arr, size_t item_size, int idx, size_t n, bool (*less)(void *, v
 // Partitions and sorts an array using the element at arr[lo] as the partition.
 // Returns the index of the final position of the partioning element.
 int partition(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, int hi) {
-  // Set left-to-right and right-to-left sscan indices. Because the while loops 
+  // Set left-to-right and right-to-left scan indices. Because the while loops 
   // below use pre-increment and pre-decrement, the actual comparisons will 
   // start at arr[lo + 1] and arr[hi].
   int i = lo;
@@ -374,7 +376,7 @@ void merge(void *arr, size_t item_size, bool (*less)(void *, void *), int lo, in
     if (i > mid) {
       memcpy(arr + k * item_size, aux + j * item_size, item_size);
       j++;
-    // Right half exhaused, take from the left
+    // Right half exhausted, take from the left
     } else if (j > hi) {
       memcpy(arr + k * item_size, aux + i * item_size, item_size);
       i++;
@@ -427,9 +429,9 @@ void shuffle(void *arr, size_t item_size, size_t n) {
 // LSD (least significant digit first) string sort
 // Uses key-indexed counting to sort strings, starting with the right-most
 // character in the string and moving to the left. Best used for sorting strings
-// that are the same length. Assumes a radix of 256 (extended ASCII).
-void str_lsd_sort(char **arr, size_t n, bool (* less)(void *, void *)) {
-  int R = 256;
+// that are the same length. Radix is defined in sort.h.
+void str_lsd_sort(char **arr, size_t n) {
+  int R = STR_SORT_RADIX;
 
   // Find the length of the longest string in the list
   int longest = -1;
@@ -502,12 +504,165 @@ void str_lsd_sort(char **arr, size_t n, bool (* less)(void *, void *)) {
   free(counts);
 }
 
-// MSD string sort
-void str_msd_sort(char **arr, size_t n, bool (* less)(void *, void *)) {
+// MSD (most significant digit first) string sort.
+// Starts with the left-most character and uses key-indexed counting to sort
+// strings by that character. Then, recursively sorts using sub-arrays formed by
+// the common leading characters.
+//
+// Note that this implementation does NOT include a cutoff to insertion sort
+// for short substrings, so is not optimal.
+void str_msd_sort(char **arr, size_t n) {
+  // Auxiliary array for storing sorted results. This array is shared amongst
+  // the recursive calls, since each call only touches an independent set of
+  // indices in the array.
+  char **aux = malloc(sizeof(char *) * n);
+  if (!aux) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
 
+  str_msd_sort_recursive(arr, 0, n, 0, aux);
+
+  free(aux);
+}
+
+// Recursive call for MSD sort, takes a lo and hi index for the partition to be
+// sorted, a d index for the character to sort on, and the aux array in which to
+// place the sorted result.
+void str_msd_sort_recursive(char **arr, int lo, int hi, int d, char **aux) {
+  int R = STR_SORT_RADIX;
+
+    // Frequency count array, unique per recursive call.
+  int *counts = malloc(sizeof(int) * (R + 1));
+  if (!counts) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Key-indexed counting using d as the current character.
+
+  // Set frequency counts to 0
+  for (int i = 0; i < R + 1; i++) {
+    counts[i] = 0;
+  }
+  
+  // Count the frequency of each character
+  for (int i = lo; i < hi; i++) {
+    counts[arr[i][d] + 1]++;
+  }
+
+  // Compute frequency count cumulates by summing the frequencies seen up to
+  // this point.
+  for (int r = 0; r < R; r++) {
+    counts[r + 1] += counts[r];
+  }
+
+  // Sort by cumulates index. On each iteration, check the counts array for
+  // the current character, and use the value there to place the current
+  // string in the aux array. Increment the counts at that index so that the
+  // next occurrence of the same character is placed in the subsequent spot
+  // in the aux array.
+  for (int i = lo; i < hi; i++) {
+    aux[lo + counts[(int)arr[i][d]]++] = arr[i];
+  }
+
+  free(counts);
+
+  // Copy strings from the aux array back to the original array.
+  for (int i = lo; i < hi; i++) {
+    arr[i] = aux[i];
+  }
+
+  // Partition and kick-off recursive calls. Search through the aux array for
+  // lo/hi indices corresponding to the same character.
+
+  // for (int r = 0; r < R; r++) {
+  //   str_msd_sort_recursive(arr, lo + counts[r], hi + counts[r + 1] - 1, d + 1, aux);
+  // }
+
+  int cur_lo = lo;
+  char cur_c = aux[lo][d];
+  for (int i = lo; i < hi; i++) {
+    // Check if there is a new character
+    if (aux[i][d] != cur_c && aux[i][d] != '\0') {
+      // Recursive call for the current character
+      str_msd_sort_recursive(arr, cur_lo, i, d + 1, aux);
+      
+      // Reset current character and lo index
+      cur_c = aux[i][d];
+      cur_lo = i;
+    }
+  }
+  // Final recursive call for the last character
+  if (aux[hi - 1][d] != '\0') {
+    str_msd_sort_recursive(arr, cur_lo, hi, d + 1, aux);
+  }
 }
 
 // Three-way string quicksort
-void str_threeway_quicksort(char **arr, size_t n, bool (* less)(void *, void *)) {
-
+// Recursively partitions and sorts sub-arrays based on the first (most-significant)
+// character. Uses three-way quicksort, which partitions on a given element
+// and results in "less than", "greater than", and "equal to" partitions, which
+// are then recursively sorted. 
+// 
+// The less than and greater than partitions are sorted on their first
+// character, while the equal to partition is sorted starting with its second
+// character (since the first is already known to be equal). This results in
+// greater efficiency compared to MSD string sort when there are many strings
+// with equal prefixes, since a new recursive call and aux array does not need
+// to be allocated for such sub-arrays.
+//
+// Note that this implementation does NOT cutoff to insertion sort for short
+// sub-strings and is therefore not optimal.
+void str_threeway_quicksort(char **arr, size_t n) {
+  str_threeway_quicksort_recursive(arr, 0, n - 1, 0);
 }
+
+// Recursive call to do a threeway quicksort on a given partition of an array
+// using a given character to sort on.
+void str_threeway_quicksort_recursive(char **arr, int lo, int hi, int d) {
+  if (hi <= lo) {
+    return;
+  }
+
+  // Indices we will use to determine which strings are less than, equal to,
+  // or greater than the partitioning character. Our goal is to swap elements
+  // and end up with these indices such that:
+  //    lo to lt - 1 are less than the partitioning character
+  //    lt to gt are equal to the partitioning character
+  //    gt + 1 to hi are greater than the partioning character
+  int lt = lo;
+  int gt = hi;
+
+  // Partitioning character
+  int v = arr[lo][d];
+
+  // Starting index for scan, one beyond the partitioning character
+  int i = lo + 1;
+  while (i <= gt) {
+    int t = arr[i][d];
+
+    // Threeway partitioning logic:
+    // 1. If less than the partitioning character, swap current character and
+    // the character at the lt pointer, and increment both indices.
+    // 2. If greater than the partitioning character, swap current character and
+    // the character at the gt pointer. Decrement the gt pointer.
+    // 3. If equal to the partioning character, just increment the current index
+    if (t < v) {
+      exchange(arr, sizeof(char *), lt++, i++);
+    } else if (t > v) {
+      exchange(arr, sizeof(char *), i, gt--);
+    } else {
+      i++;
+    }
+  }
+  
+  // Recursive calls on partitions
+  str_threeway_quicksort_recursive(arr, lo, lt - 1, d);
+  // Check for null terminator
+  if (v != '\0') {
+    str_threeway_quicksort_recursive(arr, lt, gt, d + 1);
+  }
+  str_threeway_quicksort_recursive(arr, gt + 1, hi, d);
+}
+

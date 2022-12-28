@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include "../lib/lib.h"
 
+#define STR_SORT_RADIX 256
+
 enum sort_type {
   SELECTION,
   INSERTION,

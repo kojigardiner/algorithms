@@ -2,10 +2,13 @@ CC = gcc
 CFLAGS = -Wall -Werror -g
 ALGORITHMS_PATH := ..
 
-objects := sort_client
+objects := sort_client kwic_client
 all: $(objects)
-	@echo Executing tests
-	$(foreach obj, $(objects), ./$(obj);)
+
+# KWIC client
+kwic_client: lib.o kwic_client.o sort.o
+	@echo Compiling kwic_client
+	$(CC) $(CFLAGS) $^ -o $@
 
 # Sort client
 sort_client: lib.o sort_client.o sort.o

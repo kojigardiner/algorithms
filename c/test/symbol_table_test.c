@@ -9,6 +9,7 @@ static int alphabet_len = (int)('z' - 'a' + 1);
 st_t *st;
 int st_type;
 int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE_CHAINING, HASH_TABLE_PROBING};
+int trie_st_types[] = {TRIE_RWAY, TRIE_TST};
 
 void setUp() {
   st = st_init(sizeof(char), sizeof(int), compare_char, st_type);
@@ -65,6 +66,7 @@ void test_st_get() {
   for (char i = 'a'; i <= 'z'; i++) {
     TEST_ASSERT_TRUE(st_get(st, &i, &ascii));
     TEST_ASSERT_EQUAL((int)i, ascii);
+    TEST_ASSERT_TRUE(st_contains(st, &i));
   }
 }
 
@@ -75,6 +77,7 @@ void test_st_get_missing() {
   int ascii;
   char key = '1';
   TEST_ASSERT_FALSE(st_get(st, &key, &ascii));
+  TEST_ASSERT_FALSE(st_contains(st, &key));
 }
 
 // Test put/get with duplicated keys that increment a count

@@ -6,11 +6,16 @@ UNITY_PATH := ../../../Unity/src
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
 cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test \
-shortest_paths_test flow_network_test
+shortest_paths_test flow_network_test trie_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Trie tests
+trie_test: lib.o trie_test.o symbol_table.o unity.o stack.o queue.o
+	@echo Compiling trie_test
+	$(CC) $(CFLAGS) $^ -o $@
 
 # Network flow tests
 flow_network_test: lib.o flow_network_test.o flow_network.o flow_edge.o unity.o bag.o queue.o
@@ -103,7 +108,7 @@ graph.o: $(ALGORITHMS_PATH)/graph/graph.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Symbol Table
-symbol_table_test: lib.o symbol_table_test.o symbol_table.o unity.o stack.o
+symbol_table_test: lib.o symbol_table_test.o symbol_table.o unity.o stack.o queue.o
 	@echo Compiling symbol_table_test
 	$(CC) $(CFLAGS) $^ -o $@
 

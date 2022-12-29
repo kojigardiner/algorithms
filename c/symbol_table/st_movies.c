@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
 
   queue_t *movie_q;
   queue_t *actor_q;
-  st_t *movie_to_actor = st_init(sizeof(char *), sizeof(queue_t *), compare_str, HASH_TABLE);
-  st_t *actor_to_movie = st_init(sizeof(char *), sizeof(queue_t *), compare_str, HASH_TABLE);
+  st_t *movie_to_actor = st_init(sizeof(char *), sizeof(queue_t *), compare_str, HASH_TABLE_PROBING);
+  st_t *actor_to_movie = st_init(sizeof(char *), sizeof(queue_t *), compare_str, HASH_TABLE_PROBING);
 
   // Read each line from the file
   while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {

@@ -11,7 +11,8 @@ enum st_type {
   SEQUENTIAL_SEARCH,
   BST,
   RED_BLACK_BST,
-  HASH_TABLE,
+  HASH_TABLE_CHAINING,
+  HASH_TABLE_PROBING,
 };
 
 // Generic symbol table data type

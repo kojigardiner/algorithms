@@ -11,8 +11,8 @@
 #include "symbol_table.h"
 
 int main(int argc, char *argv[]) {
-  int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE};
-  char *st_names[] = {"BST", "RED_BLACK_BST", "SEQUENTIAL_SEARCH", "HASH_TABLE"};
+  int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE_CHAINING, HASH_TABLE_PROBING};
+  char *st_names[] = {"BST", "RED_BLACK_BST", "SEQUENTIAL_SEARCH", "HASH_TABLE_CHAINING", "HASH_TABLE_PROBING"};
 
   FILE *fp;
   if (argc < 2) {

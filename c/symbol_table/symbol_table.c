@@ -20,16 +20,20 @@
 // nodes to be visited in-order (i.e. giving preference to left, root, then 
 // right).
 //
-// Hash Table and Sequential Search:
+// Hash Table Implementations:
 // -----------------------------------------
-// The hash table consists of an array of linked list symbol tables, where each
-// node includes the key and value. The hash function is provided in lib.c,
-// though ideally it should be able to be client-defined for complex objects.
+// To variants of hash tables are implemented: separate chaining using
+// linked list symbol tables, and linear probing using open addressing.
+// 
+// The separate chaining hash table consists of an array of linked list symbol 
+// tables, where each node includes the key and value. 
+// 
+// The linear probing approach involves directly allocating an array of keys and
+// values, where collisions are handled by iterating past the hash index to the 
+// next empty index. A separate array tracks whether each index is empty or not.
 //
-// An alternative to the separate chaining approach implemented 
-// here is the linear probing approach, which involves directly allocating an
-// array of keys and values, where collisions are handled by iterating past the
-// hash index to the next empty index.
+// The hash function is provided in lib.c, though ideally it should be able to 
+// be client-defined for complex objects.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
@@ -41,6 +45,7 @@
 #include "../stack/stack.h"
 
 #define INITIAL_HASH_TABLE_CHAINS 4
+#define INITIAL_HASH_TABLE_ARRAY  16
 #define MAX_HASH_TABLE_CHAIN_LEN  10
 
 // Node in a binary search tree
@@ -80,9 +85,17 @@ typedef struct st {
   my_stack_t *tree_iter_stack;
 
   // For separate-chaining hashtable ST
-  st_t **hash_table;
-  int hash_table_size;
+  st_t **hash_table;    // pointer to an array of sequential search STs
   int hash_table_chains;
+
+  // For linear-probing hashtable ST
+  int hash_table_array_size;  // size of array
+  void *hash_table_keys;   // array of keys
+  void *hash_table_values; // array of values
+  bool *hash_table_used;  // array indicating whether position in HT is empty
+
+  // For all hashtable STs
+  int hash_table_entries;
   int curr_hash_iter_idx;
   int curr_hash_iter_count;
 
@@ -113,7 +126,10 @@ void free_list(list_node_t *node);
 
 // Private functions for hash tables
 uint32_t hash_compute(st_t *st, void *key);
-void resize_hash(st_t *st, int new_size);
+void resize_hash_chaining(st_t *st, int new_size);
+void resize_hash_probing(st_t *st, int new_size);
+bool put_hash(st_t *st, void *key, void *value);
+bool get_hash(st_t *st, void *key, void *value_found);
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
@@ -128,8 +144,9 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   st->first = NULL;
   st->hash_table = NULL;
   st->list_size = 0;
-  st->hash_table_size = 0;
+  st->hash_table_entries = 0;
   st->hash_table_chains = INITIAL_HASH_TABLE_CHAINS;
+  st->hash_table_array_size = INITIAL_HASH_TABLE_ARRAY;
   st->key_size = key_size;
   st->value_size = value_size;
   st->compare = compare;
@@ -138,19 +155,44 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
   st->curr_hash_iter_idx = 0;
   st->curr_hash_iter_count = 0;
   st->tree_iter_stack = NULL;
+  st->hash_table_keys = NULL;
+  st->hash_table_values = NULL;
+  st->hash_table_used = NULL;
   st->type = type;
 
-  if (st->type == HASH_TABLE) {
-    st->hash_table = malloc(sizeof(st_t *) * st->hash_table_chains);
-    if (!st->hash_table) {
-      perror("Failed to malloc\n");
-      exit(EXIT_FAILURE);
-    }
+  // For hash tables, we need to do some initial setup
+  switch (st->type) {
+    case HASH_TABLE_CHAINING: 
+      st->hash_table = malloc(sizeof(st_t *) * st->hash_table_chains);
+      if (!st->hash_table) {
+        perror("Failed to malloc\n");
+        exit(EXIT_FAILURE);
+      }
 
-    // Create a linked list sequential search ST for each element in the hash table
-    for (int i = 0; i < st->hash_table_chains; i++) {
-      st->hash_table[i] = st_init(key_size, value_size, compare, SEQUENTIAL_SEARCH);
-    }
+      // Create a linked list sequential search ST for each element in the hash table
+      for (int i = 0; i < st->hash_table_chains; i++) {
+        st->hash_table[i] = st_init(key_size, value_size, compare, SEQUENTIAL_SEARCH);
+      }
+      break;
+    case HASH_TABLE_PROBING:
+      st->hash_table_keys = malloc(st->key_size * st->hash_table_array_size);
+      if (!st->hash_table_keys) {
+        perror("Failed to malloc\n");
+        exit(EXIT_FAILURE);
+      }
+      st->hash_table_values = malloc(st->value_size * st->hash_table_array_size);
+      if (!st->hash_table_values) {
+        perror("Failed to malloc\n");
+        exit(EXIT_FAILURE);
+      }
+      st->hash_table_used = calloc(st->hash_table_array_size, sizeof(bool));
+      if (!st->hash_table_used) {
+          perror("Failed to malloc\n");
+        exit(EXIT_FAILURE);
+      }
+      break;
+    default:
+      break;
   }
 
   return st;
@@ -169,9 +211,9 @@ uint32_t hash_compute(st_t *st, void *key) {
   return fnv_hash_32(key, st->key_size);
 }
 
-// Creates a new hash table of the given size, and iterates over the old table
-// to re-insert all entries.
-void resize_hash(st_t *st, int new_size) {
+// Creates a new separate chaining hash table of the given size, and iterates 
+// over the old table to re-insert all entries.
+void resize_hash_chaining(st_t *st, int new_size) {
   // Allocate the new table
   st_t **new_hash_table = malloc(sizeof(st_t *) * new_size);
   if (!new_hash_table) {
@@ -212,6 +254,62 @@ void resize_hash(st_t *st, int new_size) {
   st->hash_table = new_hash_table;
   st->hash_table_chains = new_size;
 }
+
+// Creates a new linear probing hash table of the given size, and iterates over 
+// the old table to re-insert all entries.
+void resize_hash_probing(st_t *st, int new_size) {
+  // Create an entirely new symbol table as a temporary placeholder
+  st_t *tmp_st = st_init(st->key_size, st->value_size, st->compare, st->type);
+  
+  // Manually resize the arrays to the new size we need
+  tmp_st->hash_table_keys = realloc(tmp_st->hash_table_keys, new_size * st->key_size);
+  if (!tmp_st->hash_table_keys) {
+    perror("Failed to realloc\n");
+    exit(EXIT_FAILURE);
+  }
+  tmp_st->hash_table_values = realloc(tmp_st->hash_table_values, new_size * st->value_size);
+  if (!tmp_st->hash_table_values) {
+    perror("Failed to realloc\n");
+    exit(EXIT_FAILURE);
+  }
+  tmp_st->hash_table_used = realloc(tmp_st->hash_table_used, new_size * sizeof(bool));
+  if (!tmp_st->hash_table_used) {
+    perror("Failed to realloc\n");
+    exit(EXIT_FAILURE);
+  }
+  tmp_st->hash_table_array_size = new_size;
+
+  // Iterate over the old table
+  if (!st_iter_init(st)) {
+    printf("Failed to create iterator\n");
+    exit(EXIT_FAILURE);
+  }
+
+  void *key = malloc(st->key_size);
+  void *value = malloc(st->value_size);
+  if (!key || !value) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  while (st_iter_has_next(st)) {
+    st_iter_next(st, key);
+    st_get(st, key, value);
+    // Put key/value pairs into the new table
+    put_hash(tmp_st, key, value);
+  }
+
+  // Copy over the pointers to the keys, values, used arrays, and other elements
+  st->hash_table_array_size = tmp_st->hash_table_array_size;
+  st->hash_table_entries = tmp_st->hash_table_entries;
+  st->hash_table_keys = tmp_st->hash_table_keys;
+  st->hash_table_values = tmp_st->hash_table_values;
+  st->hash_table_used = tmp_st->hash_table_used;
+
+  // Free the temp symbol table struct
+  free(tmp_st);
+}
+
 
 // Returns a new tree node with the given key and value.
 node_t *new_node_tree(st_t *st, void *key, void *value) {
@@ -373,14 +471,23 @@ bool st_put(st_t *st, void *key, void *value) {
     case SEQUENTIAL_SEARCH:
       put_list(st, key, value);
       break;
-    case HASH_TABLE:
+    case HASH_TABLE_CHAINING:
       // Enlargen the table if avg chain length is > MAX_HASH_TABLE_CHAIN_LEN
-      if (st->hash_table_size / st->hash_table_chains > MAX_HASH_TABLE_CHAIN_LEN) {
-        resize_hash(st, 2 * st->hash_table_chains);
+      if (st->hash_table_entries / st->hash_table_chains > MAX_HASH_TABLE_CHAIN_LEN) {
+        resize_hash_chaining(st, 2 * st->hash_table_chains);
       }
       if (put_list(st->hash_table[hash_compute(st, key) % st->hash_table_chains], key, value)) {
-        st->hash_table_size++;
+        st->hash_table_entries++;
       }
+      break;
+    case HASH_TABLE_PROBING:
+      // Keep load factor between 25% and 50% by doubling size of array whenever 
+      // we hit 50% loading.
+      if (st->hash_table_entries >= st->hash_table_array_size / 2) {
+        resize_hash_probing(st, 2 * st->hash_table_array_size);
+      }
+      put_hash(st, key, value);
+      
       break;
     default:
       printf("Unrecognized type\n");
@@ -454,6 +561,33 @@ bool put_list(st_t *st, void *key, void *value) {
   return true;
 }
 
+// Puts a key value pair in a hash table linear probing array. Returns true if
+// successful, false otherwise.
+bool put_hash(st_t *st, void *key, void *value) {
+  // Iterate over hash table indices until we find an empty entry. Note that the
+  // resizing above should ensure we find an empty spot eventually.
+  int idx;
+  for (idx = hash_compute(st, key) % st->hash_table_array_size;
+      st->hash_table_used[idx];
+      idx = (idx + 1) % st->hash_table_array_size) {
+  
+    // Check if the key here matches the put key
+    void *curr_key = st->hash_table_keys + idx * st->key_size;
+    if (st->compare(curr_key, key) == 0) {
+      // Found existing key, update value and return
+      memcpy(st->hash_table_values + idx * st->value_size, value, st->value_size);
+      return true;
+    }
+  }
+      
+  // Found an empty index, so copy the key/value and update the empty array
+  memcpy(st->hash_table_keys + idx * st->key_size, key, st->key_size);
+  memcpy(st->hash_table_values + idx * st->value_size, value, st->value_size);
+  st->hash_table_used[idx] = true;
+  st->hash_table_entries++;
+  return true;
+}
+
 // Returns the value paired with the given key. Copies the value into the
 // memory location provided in value_found. The caller is responsible for
 // allocating memory for the returned value. Returns true if the key exists,
@@ -469,8 +603,10 @@ bool st_get(st_t *st, void *key, void *value_found) {
       return get_tree(st, st->root, key, value_found);
     case SEQUENTIAL_SEARCH:
       return get_list(st, key, value_found);
-    case HASH_TABLE:
+    case HASH_TABLE_CHAINING:
       return get_list(st->hash_table[hash_compute(st, key) % st->hash_table_chains], key, value_found);
+    case HASH_TABLE_PROBING:
+      return get_hash(st, key, value_found);
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -514,6 +650,32 @@ bool get_list(st_t *st, void *key, void *value_found) {
   return false;
 }
 
+// Finds a given key in a linear probing hash table. If the key is found, copies 
+// the value into value_found and returns true. Otherwise returns false.
+bool get_hash(st_t *st, void *key, void *value_found) {
+  if (st_is_empty(st)) {
+    return false;
+  }
+
+  int idx;
+
+  // Iterate over the hash table entries looking for a matching key
+  for (idx = hash_compute(st, key) % st->hash_table_array_size;
+      st->hash_table_used[idx];
+      idx = (idx + 1) % st->hash_table_entries) {
+    // Check the key
+    void *curr_key = st->hash_table_keys + idx * st->key_size;
+    if (st->compare(curr_key, key) == 0) {
+      memcpy(value_found, st->hash_table_values + idx * st->value_size, st->value_size);
+      return true;
+    }
+  }
+
+  // We hit an empty index before finding the key so we return. Note that the
+  // hash table resizing in st_put() ensures there will be < 100% loading.
+  return false;
+}
+
 // Returns true if the symbol table is empty, false otherwise.
 bool st_is_empty(st_t *st) {
   if (!st) {
@@ -534,8 +696,9 @@ unsigned int st_size(st_t *st) {
       return size_tree(st->root);
     case SEQUENTIAL_SEARCH:
       return st->list_size;
-    case HASH_TABLE:
-      return st->hash_table_size;
+    case HASH_TABLE_CHAINING:
+    case HASH_TABLE_PROBING:
+      return st->hash_table_entries;
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -576,10 +739,17 @@ void st_free(st_t *st) {
     case SEQUENTIAL_SEARCH:
       free_list(st->first);
       break;
-    case HASH_TABLE:
+    case HASH_TABLE_CHAINING:
       for (int i = 0; i < st->hash_table_chains; i++) {
         free_list(st->hash_table[i]->first);
       }
+      free(st->hash_table);
+      break;
+    case HASH_TABLE_PROBING:
+      free(st->hash_table_keys);
+      free(st->hash_table_values);
+      free(st->hash_table_used);
+      break;
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -611,10 +781,18 @@ bool st_iter_init(st_t *st) {
     case SEQUENTIAL_SEARCH:
       st->curr_list_iter = st->first;
       break;
-    case HASH_TABLE:
+    case HASH_TABLE_CHAINING:
       st->curr_hash_iter_idx = 0;
       st->curr_hash_iter_count = 0;
       st->curr_list_iter = st->hash_table[st->curr_hash_iter_idx]->first;
+      break;
+    case HASH_TABLE_PROBING:
+      st->curr_hash_iter_idx = 0;
+      // Set idx to first non-empty index
+      while (st->hash_table_entries > 0 && !st->hash_table_used[st->curr_hash_iter_idx]) {
+        st->curr_hash_iter_idx++;
+      }
+      st->curr_hash_iter_count = 0;
       break;
     default:
       printf("Unrecognized type\n");
@@ -636,8 +814,9 @@ bool st_iter_has_next(st_t *st) {
       return (st->curr_tree_iter != NULL || !stack_is_empty(st->tree_iter_stack));
     case SEQUENTIAL_SEARCH:
       return st->curr_list_iter != NULL;
-    case HASH_TABLE:
-      return (st->curr_hash_iter_count < st->hash_table_size);
+    case HASH_TABLE_CHAINING:
+    case HASH_TABLE_PROBING:
+      return (st->curr_hash_iter_count < st->hash_table_entries);
     default:
       printf("Unrecognized type\n");
       exit(EXIT_FAILURE);
@@ -674,7 +853,7 @@ void st_iter_next(st_t *st, void *key) {
       memcpy(key, st->curr_list_iter->key, st->key_size);
       st->curr_list_iter = st->curr_list_iter->next;
       break;
-    case HASH_TABLE:
+    case HASH_TABLE_CHAINING:
       // We've reached the end of the current list, so move to the next one
       while (!st->curr_list_iter) {
         st->curr_hash_iter_idx++;
@@ -683,6 +862,16 @@ void st_iter_next(st_t *st, void *key) {
       memcpy(key, st->curr_list_iter->key, st->key_size);
       st->curr_list_iter = st->curr_list_iter->next;
       st->curr_hash_iter_count++;
+      break;
+    case HASH_TABLE_PROBING:
+      memcpy(key, st->hash_table_keys + st->curr_hash_iter_idx * st->key_size, st->key_size);
+      st->curr_hash_iter_count++;
+      st->curr_hash_iter_idx++;
+
+      // Find the next non-empty index
+      while (!st->hash_table_used[st->curr_hash_iter_idx]) {
+        st->curr_hash_iter_idx = (st->curr_hash_iter_idx + 1) % st->hash_table_array_size;
+      }
       break;
     default:
       printf("Unrecognized type\n");

@@ -8,7 +8,7 @@ static int counts[] = {1,1,1,1,3,1,1,2,1,1,1,1,1,1,4,1,1,2,1,2,2,1,1,1,1,1};
 static int alphabet_len = (int)('z' - 'a' + 1);
 st_t *st;
 int st_type;
-int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE};
+int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE_CHAINING, HASH_TABLE_PROBING};
 
 void setUp() {
   st = st_init(sizeof(char), sizeof(int), compare_char, st_type);

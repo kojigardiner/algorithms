@@ -155,6 +155,7 @@ rway_trie_node_t *put_trie(st_t *st, rway_trie_node_t *node, char *key, void *va
 bool get_trie(st_t *st, rway_trie_node_t *node, char *key, void *value_found, int d);
 void free_trie(rway_trie_node_t *node);
 void trie_collect(st_t *st, rway_trie_node_t *node, char *s);
+int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest);
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
 // key and value types that will be stored in the symbol table, along with a
@@ -1070,13 +1071,41 @@ void trie_collect(st_t *st, rway_trie_node_t *node, char *s) {
   }
 }
 
+// Recursively searches for the longest prefix
+int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest) {
+  // If we hit a NULL node, return the longest length found
+  if (node == NULL || d == strlen(s)) {
+    return longest;
+  }
+
+  // If this node has a value, and the prefix is longer than our longest, update
+  if (node->value && d > longest) {
+    longest = d;
+  }
+
+  // Recursive call on next letter of the string
+  return trie_search(st, node->next[(int)s[d]], s, d + 1, longest);
+}
+
 // Finds the longest key that is a prefix of s and copies a pointer to it to 
 // key. The caller is responsible for freeing memory associated with the 
 // key. Returns true if successful, false otherwise.
 bool st_longest_prefix_of(st_t *st, char *s, char **key) {
+  int len = trie_search(st, st->trie_root, s, 0, 0);
+  if (len == 0) {
+    return false;
+  }
 
+  char *prefix = malloc(sizeof(char) * (len + 1));
+  if (!prefix) {
+    perror("Failed to malloc\n");
+    exit(EXIT_FAILURE);
+  }
+
+  strncpy(prefix, s, len);
+  *key = prefix;
   
-  return false;
+  return true;
 }
 
 // Initializes an iterator for examining all keys having s as a prefix.

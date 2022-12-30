@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-static char *orig_str[] = {"she", "sells", "seashells", "by", "the", "seashore"};
-static int values[] = {0, 1, 2, 3, 4, 5};
+static char *orig_str[] = {"she", "sells", "sea", "shells", "by", "the", "sea", "shore", "shell", "shellsort", "shelters"};
+static int values[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 st_t *st;
 int st_type;
@@ -132,10 +132,10 @@ void test_st_longest_prefix() {
 
   char *key;
   TEST_ASSERT_TRUE(st_longest_prefix_of(st, "shell", &key));
-  TEST_ASSERT_EQUAL_STRING(key, "she");
+  TEST_ASSERT_EQUAL_STRING("she", key);
 
   TEST_ASSERT_TRUE(st_longest_prefix_of(st, "shells", &key));
-  TEST_ASSERT_EQUAL_STRING(key, "shell");
+  TEST_ASSERT_EQUAL_STRING("shell", key);
 }
 
 void test_st_keys_with_prefix() {

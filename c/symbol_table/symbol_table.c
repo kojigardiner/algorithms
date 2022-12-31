@@ -40,7 +40,7 @@
 // An R-way trie associates extended ASCII (radix = 256) string keys with 
 // arbitrary values. String keys are not stored explicitly in the trie but
 // rather implicitly by way of the path from one node to the next following
-// a radix-indexed array of nodes. The current haracter's ASCII value provides
+// a radix-indexed array of nodes. The current character's ASCII value provides
 // the index to the next node in the trie.
 // 
 // The API provides a function for finding the longest prefix of a given string

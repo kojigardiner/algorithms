@@ -16,7 +16,6 @@ enum st_type {
   HASH_TABLE_CHAINING,
   HASH_TABLE_PROBING,
   TRIE_RWAY, // string keys only
-  TRIE_TST,  // string keys only
 };
 
 // Generic symbol table data type
@@ -83,4 +82,4 @@ bool st_match_iter_has_next(st_t *st);
 // Copies a pointer to the next string key to key. The caller is responsible
 // for freeing memory associated with the key. Returns true if successful, false
 // otherwise.
-char *st_match_iter_next(st_t *st, char **key);
+bool st_match_iter_next(st_t *st, char **key);

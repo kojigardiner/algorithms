@@ -35,8 +35,23 @@
 // The hash function is provided in lib.c, though ideally it should be able to 
 // be client-defined for complex objects.
 // 
-// Trie Implementations:
+// Trie Implementation:
 // -----------------------------------------
+// An R-way trie associates extended ASCII (radix = 256) string keys with 
+// arbitrary values. String keys are not stored explicitly in the trie but
+// rather implicitly by way of the path from one node to the next following
+// a radix-indexed array of nodes. The current haracter's ASCII value provides
+// the index to the next node in the trie.
+// 
+// The API provides a function for finding the longest prefix of a given string
+// in the trie, and provides iterators for finding all string keys with a given
+// prefix as well as all string keys that match a given key with wildcard (".")
+// characters.
+//
+// Each new node in the trie requires memory that scales with the radix, so 
+// this implementation is not ideal for larger alphabets like Unicode (16-bit).
+// A ternary search trie (TST) would be preferable for such alphabets but is not
+// implemented here.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
@@ -153,8 +168,10 @@ bool get_hash(st_t *st, void *key, void *value_found);
 rway_trie_node_t *new_node_trie();
 rway_trie_node_t *put_trie(st_t *st, rway_trie_node_t *node, char *key, void *value, int d);
 bool get_trie(st_t *st, rway_trie_node_t *node, char *key, void *value_found, int d);
+rway_trie_node_t *get_trie_node(st_t *st, rway_trie_node_t *node, char *key, int d);
 void free_trie(rway_trie_node_t *node);
 void trie_collect(st_t *st, rway_trie_node_t *node, char *s);
+void trie_collect_pattern(st_t *st, rway_trie_node_t *node, char *s, int d, char *pattern);
 int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest);
 
 // Creates a symbol table and returns a pointer to it. Pass in the size of the
@@ -769,6 +786,21 @@ bool get_trie(st_t *st, rway_trie_node_t *node, char *key, void *value_found, in
   }
 }
 
+// Recursive call to find a given key in the subtrie rooted at node. If the key
+// is found, returns the node. Otherwise returns NULL.
+rway_trie_node_t *get_trie_node(st_t *st, rway_trie_node_t *node, char *key, int d) {
+  if (node == NULL) {
+    return NULL;
+  }
+  else if (d == strlen(key)) {
+    // If we have reached the end of the string key return the node
+    return node;  
+  } else {
+    // Otherwise, continue down the trie
+    return get_trie_node(st, node->next[(int)key[d]], key, d + 1);
+  }
+}
+
 // Finds a given key in the linked list. If the key is found, copies the value 
 // into value_found and returns true. Otherwise returns false.
 bool get_list(st_t *st, void *key, void *value_found) {
@@ -1071,6 +1103,48 @@ void trie_collect(st_t *st, rway_trie_node_t *node, char *s) {
   }
 }
 
+// Recursively traverses the subtrie rooted at node and adds characters to the
+// string s, using pattern to match characters, where "." is a wildcard. Uses
+// d to track the current index in the pattern.
+// When a full string key is found, adds it to the trie_iter_q.
+void trie_collect_pattern(st_t *st, rway_trie_node_t *node, char *s, int d, char *pattern) {
+  if (node == NULL || d > strlen(pattern)) {
+    return;
+  }
+
+  // We have a full string key, so add it to the queue
+  if (node->value) {
+    char *str = strdup(s);
+    queue_enqueue(st->trie_iter_q, &str);
+  }
+
+  // Recursive call to continue down the trie
+  for (int i = 0; i < TRIE_RWAY_RADIX; i++) {
+    // Grow s to make room for a new character
+    char *s_new = malloc(strlen(s) + 2);
+    if (!s_new) {
+      perror("Failed to malloc\n");
+      exit(EXIT_FAILURE);
+    }
+    strcpy(s_new, s);
+
+    // If not a wildcard, just add the pattern character
+    if (pattern[d] != '.') {
+      i = (int)pattern[d];
+    }
+
+    s_new[strlen(s)] = i; // add the new character
+    s_new[strlen(s) + 1] = '\0';  // terminate
+    trie_collect_pattern(st, node->next[i], s_new, d + 1, pattern);
+    free(s_new);
+
+    // If not a wildcard, just break
+    if (pattern[d] != '.') {
+      break;
+    }
+  }
+}
+
 // Recursively searches for the longest prefix
 int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest) {
   // If we hit a NULL node, return the longest length found
@@ -1091,6 +1165,10 @@ int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest) {
 // key. The caller is responsible for freeing memory associated with the 
 // key. Returns true if successful, false otherwise.
 bool st_longest_prefix_of(st_t *st, char *s, char **key) {
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
   int len = trie_search(st, st->trie_root, s, 0, 0);
   if (len == 0) {
     return false;
@@ -1110,35 +1188,87 @@ bool st_longest_prefix_of(st_t *st, char *s, char **key) {
 
 // Initializes an iterator for examining all keys having s as a prefix.
 bool st_prefix_iter_init(st_t *st, char *s) {
-  return false;
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  if (st->trie_iter_q) {
+    queue_free(st->trie_iter_q);
+  }
+  st->trie_iter_q = queue_init(sizeof(char *));
+
+  // Find the node for the prefix
+  rway_trie_node_t *node = get_trie_node(st, st->trie_root, s, 0);
+  if (!node) {
+    return false;
+  }
+
+  // Collect all keys below the prefix node, adding them to the prefix string
+  trie_collect(st, node, s);
+  
+  // Initialize the iterator for the queue
+  queue_iter_init(st->trie_iter_q);
+
+  return true;
 }
 
 // Returns true if the iterator has more keys, false otherwise.
 bool st_prefix_iter_has_next(st_t *st) {
-  return false;
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  return queue_iter_has_next(st->trie_iter_q);
 }
 
 // Copies a pointer to the next string key to key. The caller is responsible
 // for freeing memory associated with the key. Returns true if successful, false
 // otherwise.
 bool st_prefix_iter_next(st_t *st, char **key) {
-  return false;
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  queue_iter_next(st->trie_iter_q, key);
+
+  return true;
 }
 
 // Initializes an iterator for examining all keys that match s, where "."
 // matches any character.
 bool st_match_iter_init(st_t *st, char *s) {
-  return false;
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  if (st->trie_iter_q) {
+    queue_free(st->trie_iter_q);
+  }
+  st->trie_iter_q = queue_init(sizeof(char *));
+  trie_collect_pattern(st, st->trie_root, "", 0, s);
+  queue_iter_init(st->trie_iter_q);
+
+  return true;
 }
 
 // Returns true if the iterator has more keys, false otherwise.
 bool st_match_iter_has_next(st_t *st) {
-  return false;
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  return queue_iter_has_next(st->trie_iter_q);
 }
 
 // Copies a pointer to the next string key to key. The caller is responsible
 // for freeing memory associated with the key. Returns true if successful, false
 // otherwise.
-char *st_match_iter_next(st_t *st, char **key) {
-  return false;
+bool st_match_iter_next(st_t *st, char **key) {
+  if (!st || st->type != TRIE_RWAY) {
+    return false;
+  }
+
+  queue_iter_next(st->trie_iter_q, key);
+
+  return true;
 }

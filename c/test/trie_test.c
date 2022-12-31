@@ -3,12 +3,16 @@
 #include <string.h>
 #include <stdlib.h>
 
-static char *orig_str[] = {"she", "sells", "sea", "shells", "by", "the", "sea", "shore", "shell", "shellsort", "shelters"};
+static char *orig_str[] = {"she", "sells", "sea", "shells", "by", "the", "shore", "shell", "shellsort", "shelters"};
+static char *prefix_she[] = {"she", "shell", "shells", "shellsort", "shelters"};
+static char *prefix_se[] = {"sea", "sells"};
+static char *match_dothe[] = {"she", "the"};
+static char *match_sdotdot[] = {"sea", "she"};
 static int values[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 st_t *st;
 int st_type;
-int st_types[] = {TRIE_RWAY};//, TRIE_TST};
+int st_types[] = {TRIE_RWAY};
 
 void setUp() {
   st = st_init(sizeof(char *), sizeof(int), compare_str, st_type);
@@ -144,17 +148,25 @@ void test_st_keys_with_prefix() {
   char *key;
   char *prefix1 = "she";
   st_prefix_iter_init(st, prefix1);
+
+  int i = 0;
   while (st_prefix_iter_has_next(st)) {
     st_prefix_iter_next(st, &key);
-    printf("prefix: %s, key: %s\n", prefix1, key);
+    TEST_ASSERT_EQUAL_STRING(prefix_she[i], key);
+    i++;
+    // printf("prefix: %s, key: %s\n", prefix1, key);
   }
 
   char *prefix2 = "se";
   st_prefix_iter_init(st, prefix2);
+
+  i = 0;
   TEST_ASSERT_TRUE(st_prefix_iter_has_next(st));
   while (st_prefix_iter_has_next(st)) {
     st_prefix_iter_next(st, &key);
-    printf("prefix: %s, key: %s\n", prefix2, key);
+    TEST_ASSERT_EQUAL_STRING(prefix_se[i], key);
+    i++;
+    // printf("prefix: %s, key: %s\n", prefix2, key);
   }
 }
 
@@ -165,16 +177,25 @@ void test_st_keys_that_match() {
   char *match1 = ".he";
   st_match_iter_init(st, match1);
   TEST_ASSERT_TRUE(st_match_iter_has_next(st));
+  
+  int i = 0;
   while (st_match_iter_has_next(st)) {
     st_match_iter_next(st, &key);
-    printf("match: %s, key: %s\n", match1, key);
+    TEST_ASSERT_EQUAL_STRING(match_dothe[i], key);
+    i++;
+    // printf("match: %s, key: %s\n", match1, key);
   }
 
   char *match2 = "s..";
   st_match_iter_init(st, match2);
+  TEST_ASSERT_TRUE(st_match_iter_has_next(st));
+  
+  i = 0;
   while (st_match_iter_has_next(st)) {
     st_match_iter_next(st, &key);
-    printf("match: %s, key: %s\n", match2, key);
+    TEST_ASSERT_EQUAL_STRING(match_sdotdot[i], key);
+    i++;
+    // printf("match: %s, key: %s\n", match2, key);
   }
 }
 

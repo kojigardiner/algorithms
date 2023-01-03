@@ -235,10 +235,9 @@ public class MyTST<Value> {
         }
 
         Node<Value> x = null;
-        if (lastPrefixString != null && lastPrefixNode != null) {
-            if (prefix.substring(0, prefix.length() - 1).equals(lastPrefixString)) {
-                x = get(lastPrefixNode, prefix.substring(prefix.length() - 1), 0);
-            }
+        if (lastPrefixNode != null
+                && prefix.substring(0, prefix.length() - 1).equals(lastPrefixString)) {
+            x = get(lastPrefixNode, prefix, lastPrefixString.length() - 1);
         }
         else {
             x = get(root, prefix, 0);

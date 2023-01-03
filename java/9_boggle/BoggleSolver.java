@@ -66,8 +66,7 @@ public class BoggleSolver {
         // Restore previous state before returning, so we can continue to explore
         // paths that utilize this character
         if (letter == 'Q') {
-            s.deleteCharAt(s.length() - 1);
-            s.deleteCharAt(s.length() - 1);
+            s.delete(s.length() - 2, s.length());
         }
         else {
             s.deleteCharAt(s.length() - 1);
@@ -81,9 +80,10 @@ public class BoggleSolver {
         TreeSet<String> words = new TreeSet<String>();
 
         // Do DFS from each tile
+        StringBuilder s = new StringBuilder();
         for (int r = 0; r < board.rows(); r++) {
             for (int c = 0; c < board.cols(); c++) {
-                StringBuilder s = new StringBuilder();
+                s.delete(0, s.length());
                 boolean[][] marked = new boolean[board.rows()][board.cols()];
                 getWordsRecursive(r, c, s, marked, words);
             }

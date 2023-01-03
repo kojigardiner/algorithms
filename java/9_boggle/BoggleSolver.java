@@ -6,12 +6,12 @@
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.TST;
+import edu.princeton.cs.algs4.Stopwatch;
 
 import java.util.TreeSet;
 
 public class BoggleSolver {
-    private TST<Integer> dict;
+    private MyTST<Integer> dict;
     private BoggleBoard board;
 
     // Initializes the data structure using the given array of strings as the dictionary.
@@ -19,8 +19,9 @@ public class BoggleSolver {
     public BoggleSolver(String[] dictionary) {
         int count = 0;
 
-        // Create a trie of dictionary words
-        dict = new TST<Integer>();
+        // Create a trie of dictionary words. Uses MyTrieSet, which is a modified version of TrieSET
+        // that fixes the radix at 26.
+        dict = new MyTST<Integer>();
         for (String s : dictionary) {
             dict.put(s, count);
             count++;
@@ -40,12 +41,8 @@ public class BoggleSolver {
         }
 
         // Check if the prefix exists
-        boolean prefixExists = false;
-        for (String kwp : dict.keysWithPrefix(s.toString())) {
-            // StdOut.printf("%s\n", kwp);
-            prefixExists = true;
-            break;
-        }
+        boolean prefixExists = dict.doesPrefixExist(s.toString());
+
         if (prefixExists) {
             // Check if current word is valid
             if (scoreOf(s.toString()) > 0) {
@@ -113,12 +110,22 @@ public class BoggleSolver {
         In in = new In(args[0]);
         String[] dictionary = in.readAllStrings();
         BoggleSolver solver = new BoggleSolver(dictionary);
-        BoggleBoard board = new BoggleBoard(args[1]);
-        int score = 0;
-        for (String word : solver.getAllValidWords(board)) {
-            StdOut.println(word);
-            score += solver.scoreOf(word);
+        // BoggleBoard board = new BoggleBoard(args[1]);
+        Stopwatch timer = new Stopwatch();
+        double start, end;
+        start = timer.elapsedTime();
+        int iterations = 10;
+        for (int i = 0; i < iterations; i++) {
+            BoggleBoard board = new BoggleBoard(4, 4);
+            solver.getAllValidWords(board);
         }
-        StdOut.println("Score = " + score);
+        end = timer.elapsedTime();
+        StdOut.printf("%f solves per second\n", 1 / ((end - start) / iterations));
+        // int score = 0;
+        // for (String word : solver.getAllValidWords(board)) {
+        //     StdOut.println(word);
+        //     score += solver.scoreOf(word);
+        // }
+        // StdOut.println("Score = " + score);
     }
 }

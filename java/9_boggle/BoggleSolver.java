@@ -6,12 +6,12 @@
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.TrieST;
+import edu.princeton.cs.algs4.TST;
 
 import java.util.TreeSet;
 
 public class BoggleSolver {
-    private TrieST<Integer> dict;
+    private TST<Integer> dict;
     private BoggleBoard board;
 
     // Initializes the data structure using the given array of strings as the dictionary.
@@ -20,7 +20,7 @@ public class BoggleSolver {
         int count = 0;
 
         // Create a trie of dictionary words
-        dict = new TrieST<Integer>();
+        dict = new TST<Integer>();
         for (String s : dictionary) {
             dict.put(s, count);
             count++;

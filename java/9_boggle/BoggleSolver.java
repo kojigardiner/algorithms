@@ -7,10 +7,10 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 
-import java.util.TreeSet;
+import java.util.HashSet;
 
 public class BoggleSolver {
-    private MyTrieSET dict;
+    private MyTrieST<Integer> dict;
     private BoggleBoard board;
 
     // Initializes the data structure using the given array of strings as the dictionary.
@@ -20,15 +20,15 @@ public class BoggleSolver {
 
         // Create a trie of dictionary words. Uses MyTrieSet, which is a modified version of TrieSET
         // that fixes the radix at 26.
-        dict = new MyTrieSET();
+        dict = new MyTrieST<Integer>();
         for (String s : dictionary) {
-            dict.add(s);
+            dict.put(s, calcScore(s));
             count++;
         }
     }
 
     private void getWordsRecursive(int row, int col, StringBuilder s, boolean marked[][],
-                                   TreeSet<String> words) {
+                                   HashSet<String> words) {
         // StdOut.printf("visiting %d %d\n", row, col);
         marked[row][col] = true;
         char letter = board.getLetter(row, col);
@@ -74,17 +74,26 @@ public class BoggleSolver {
         marked[row][col] = false;
     }
 
+    private void clearMarked(boolean[][] marked) {
+        for (int i = 0; i < board.rows(); i++) {
+            for (int j = 0; j < board.cols(); j++) {
+                marked[i][j] = false;
+            }
+        }
+    }
+
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         this.board = board;
-        TreeSet<String> words = new TreeSet<String>();
+        HashSet<String> words = new HashSet<String>();
 
         // Do DFS from each tile
         StringBuilder s = new StringBuilder();
+        boolean[][] marked = new boolean[board.rows()][board.cols()];
         for (int r = 0; r < board.rows(); r++) {
             for (int c = 0; c < board.cols(); c++) {
+                clearMarked(marked);
                 s.delete(0, s.length());
-                boolean[][] marked = new boolean[board.rows()][board.cols()];
                 getWordsRecursive(r, c, s, marked, words);
             }
         }
@@ -96,6 +105,10 @@ public class BoggleSolver {
     // (You can assume the word contains only the uppercase letters A through Z.)
     public int scoreOf(String word) {
         if (!dict.contains(word)) return 0;
+        return dict.get(word);
+    }
+
+    private int calcScore(String word) {
         int len = word.length();
         if (len < 3) return 0;
         if (len <= 4) return 1;
@@ -109,13 +122,12 @@ public class BoggleSolver {
         In in = new In(args[0]);
         String[] dictionary = in.readAllStrings();
 
-        BoggleBoard board = new BoggleBoard(args[1]);
         BoggleSolver solver = new BoggleSolver(dictionary);
 
         // Stopwatch timer = new Stopwatch();
         // double start, end;
         // start = timer.elapsedTime();
-        // int iterations = 10;
+        // int iterations = 100;
         // for (int i = 0; i < iterations; i++) {
         //     BoggleBoard board = new BoggleBoard(4, 4);
         //     solver.getAllValidWords(board);
@@ -123,6 +135,7 @@ public class BoggleSolver {
         // end = timer.elapsedTime();
         // StdOut.printf("%f solves per second\n", 1 / ((end - start) / iterations));
 
+        BoggleBoard board = new BoggleBoard(args[1]);
         int score = 0;
         for (String word : solver.getAllValidWords(board)) {
             StdOut.println(word);
@@ -131,3 +144,5 @@ public class BoggleSolver {
         StdOut.println("Score = " + score);
     }
 }
+
+

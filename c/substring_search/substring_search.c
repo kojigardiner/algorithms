@@ -7,17 +7,21 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+static const long long PRIME = 257492101824743;
 
 // Private functions
 int substring_search_brute(char *pattern, char *text);
-
 int substring_search_kmp(char *pattern, char *text);
+int substring_search_boyer_moore(char *pattern, char *text);
+int substring_search_rabin_karp(char *pattern, char *text);
+
 void compute_dfa(char *pattern, int **dfa);
 int **calloc_2d_array(int rows, int cols);
 void free_2d_array(int **arr, int rows, int cols);
 void print_dfa(char *pattern, int **dfa);
-
-int substring_search_boyer_moore(char *pattern, char *text);
+long long str_hash(char *str, int m);
 
 // Search for the given pattern in the given text. Returns the starting position
 // of the pattern if found, or -1 otherwise.
@@ -29,6 +33,8 @@ int substring_search(char *pattern, char *text, enum search_type type) {
       return substring_search_kmp(pattern, text);
     case BOYER_MOORE:
       return substring_search_boyer_moore(pattern, text);
+    case RABIN_KARP:
+      return substring_search_rabin_karp(pattern, text);
     default:
       return -1;
   }
@@ -199,7 +205,7 @@ int substring_search_kmp(char *pattern, char *text) {
 //       the text such that the characters align.
 //    3) If the mismatched character is in the pattern and its rightmost
 //       occurrence is to the right of the current pattern character, we just
-//       move the text by one position.
+//       move the text by one position to the let the text "catch up".
 //
 // Returns the index of the first matched character of the pattern, or -1 if
 // there is no match.
@@ -252,6 +258,59 @@ int substring_search_boyer_moore(char *pattern, char *text) {
           break;
         }
       }
+    }
+  }
+
+  return -1;
+}
+
+// Computes the hash of a given string, using the first m characters and 
+// Horner's method to treat a string as a multi-digit number with radix RADIX.
+long long str_hash(char *str, int m) {
+  long long h = 0;
+  for (int i = 0; i < m; i++) {
+    h = (h * RADIX + (long long)str[i]) % PRIME;
+  }
+  
+  return h;
+}
+
+// Rabin-Karp algorithm for substring search, which computes a hash
+// "fingerprint" for a pattern and uses a variation of Horner's method to 
+// efficiently calculate successive hashes of characters in the text, searching
+// for a match.
+// 
+// Returns the index of the first matched character of the pattern, or -1 if
+// there is no match.
+int substring_search_rabin_karp(char *pattern, char *text) {
+  int m = strlen(pattern);
+  int n = strlen(text);
+
+  // Compute radix multiplier used to subtract the leading "digit"
+  // Equivalent to RADIX ^ (m - 1)
+  long long rm = 1;
+  for (int i = 0; i < m - 1; i++) {
+    rm  = (rm * RADIX) % PRIME;
+  }
+
+  // Compute the pattern hash and the hash of the first m characters of text
+  long long pat_hash = str_hash(pattern, m);
+  long long h = str_hash(text, m);
+
+  // Immediate match, return
+  if (h == pat_hash) {
+    return 0;
+  }
+  
+  // Check successive characters in the text by removing the leading character
+  // and adding the next character. Take care when performing modulus operations
+  // mid-calculation!
+  for (int i = 1; i <= n - m; i++) {
+    h = (h + PRIME - (text[i - 1] * rm) % PRIME) % PRIME;   // add PRIME before calc to prevent negative result
+    h = ((h * RADIX) % PRIME + text[i + m - 1]) % PRIME;
+
+    if (h == pat_hash) {
+      return i;
     }
   }
 

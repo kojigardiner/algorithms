@@ -55,7 +55,7 @@ public class MyTrieST<Value> {
 
     private Node root;      // root of trie
     private int n;          // number of keys in trie
-    
+
     private Node currNode;  // current node to search from
     private int currD;      // current character index in search string
 
@@ -87,7 +87,7 @@ public class MyTrieST<Value> {
      */
     public Object get(String key) {
         if (key == null) throw new IllegalArgumentException("argument to get() is null");
-        Node x = get(currNode, key, currD);
+        Node x = get(root, key, 0);
         if (x == null) return null;
         return x.val;
     }

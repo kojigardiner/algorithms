@@ -17,6 +17,8 @@ int **calloc_2d_array(int rows, int cols);
 void free_2d_array(int **arr, int rows, int cols);
 void print_dfa(char *pattern, int **dfa);
 
+int substring_search_boyer_moore(char *pattern, char *text);
+
 // Search for the given pattern in the given text. Returns the starting position
 // of the pattern if found, or -1 otherwise.
 int substring_search(char *pattern, char *text, enum search_type type) {
@@ -25,6 +27,8 @@ int substring_search(char *pattern, char *text, enum search_type type) {
       return substring_search_brute(pattern, text);
     case KMP:
       return substring_search_kmp(pattern, text);
+    case BOYER_MOORE:
+      return substring_search_boyer_moore(pattern, text);
     default:
       return -1;
   }
@@ -177,4 +181,79 @@ int substring_search_kmp(char *pattern, char *text) {
   } else {
     return i - m + 1; // first matched character
   }
+}
+
+// Boyer-Moore algorithm for substring search using the mismatched character
+// heuristic. Instead of matching text to pattern from left-to-right as in the
+// brute force method, we move through the text left-to-right but look for
+// matches in the pattern moving right-to-left. This allows us to skip ahead as 
+// soon as a mismatch is found.
+//
+// The distance to skip ahead is aided by the right[] array, which stores
+// the rightmost index of each character in the pattern. This allows us to 
+// breakdown the mismatched character heuristic as follows:
+//    1) If the mismatched character is not in the pattern, simply shift our
+//       text pointer past the mismatched character.
+//    2) If the mismatched character is in the pattern and its rightmost
+//       occurrence is to the left of the current pattern character, shift
+//       the text such that the characters align.
+//    3) If the mismatched character is in the pattern and its rightmost
+//       occurrence is to the right of the current pattern character, we just
+//       move the text by one position.
+//
+// Returns the index of the first matched character of the pattern, or -1 if
+// there is no match.
+int substring_search_boyer_moore(char *pattern, char *text) {
+  int n = strlen(text);
+  int m = strlen(pattern);
+
+  // Compute skip array, which is the index of the rightmost occurrence of a
+  // character in the pattern.
+  int *right = malloc(RADIX * sizeof(int));
+  // Default value is -1
+  for (int c = 0; c < RADIX; c++) {
+    right[c] = -1;
+  }
+  // Update characters in the pattern
+  for (int j = 0; j < m; j++) {
+    right[(int)pattern[j]] = j;
+  }
+
+  // Iterate over the text from l to r, and the pattern from r to l
+  int i, j;
+  for (i = 0; i <= n - m; i++) {
+    for (j = m - 1; j >= 0; j--) {
+      // printf("%d %d\n", i, i+j);
+
+      char c = text[i + j];
+      // Matched!
+      if (c == pattern[j] && j == 0) {
+        free(right);
+        return i;
+      }
+      // Mismatched
+      if (c != pattern[j]) {
+        int mismatch_idx = right[(int)c];
+        // Mismatched character is not in the pattern, so shift the text past
+        // the pattern and break
+        if (mismatch_idx == -1) {
+          i += j;
+          break;
+        }
+        // Mismatched character is to the left of the current pattern character,
+        // so shift the text and break
+        if (mismatch_idx < j) {
+          i += j - mismatch_idx - 1;
+          break;
+        }
+        // Mismatched character is to the right of the current pattern character,
+        // so simply break and allow the text to shift by one character
+        if (mismatch_idx > j) {
+          break;
+        }
+      }
+    }
+  }
+
+  return -1;
 }

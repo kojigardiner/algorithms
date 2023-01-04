@@ -19,6 +19,10 @@ static char *text4 = "ABRACADABRAABRACADABRAABRACADABRA";
 static char *pattern4 = "ABRACADABRA";
 static int found4 = 0;
 
+static char *text5 = "FINDINAHAYSTACKNEEDLE";
+static char *pattern5 = "NEEDLE";
+static int found5 = 15;
+
 int search_types[] = {BRUTE, KMP, BOYER_MOORE, RABIN_KARP};
 int type;
 
@@ -50,6 +54,11 @@ void test_search4() {
   TEST_ASSERT_EQUAL(-1, substring_search("nomatch", text4, type));
 }
 
+void test_search5() {
+  TEST_ASSERT_EQUAL(found5, substring_search(pattern5, text5, type));
+  TEST_ASSERT_EQUAL(-1, substring_search("nomatch", text5, type));
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
@@ -59,6 +68,7 @@ int main() {
     RUN_TEST(test_search2);
     RUN_TEST(test_search3);
     RUN_TEST(test_search4);
+    RUN_TEST(test_search5);
   }
   return UNITY_END();
 }

@@ -6,11 +6,19 @@ UNITY_PATH := ../../../Unity/src
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
 cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test \
-shortest_paths_test flow_network_test trie_test
+shortest_paths_test flow_network_test trie_test substring_search_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Substring search
+substring_search_test: lib.o substring_search_test.o substring_search.o unity.o
+	@echo Compiling substring_search_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+substring_search.o: $(ALGORITHMS_PATH)/substring_search/substring_search.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Trie tests
 trie_test: lib.o trie_test.o symbol_table.o unity.o stack.o queue.o

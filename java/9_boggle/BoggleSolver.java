@@ -6,10 +6,13 @@
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.Stopwatch;
 
 import java.util.HashSet;
 
 public class BoggleSolver {
+    // Use a customized TrieST with radix 26 and "memory" as to the last node visited in the Trie.
+    // This makes the prefix & contains methods faster.
     private final MyTrieST<Integer> dict;
     private BoggleBoard myBoard;
 
@@ -127,24 +130,24 @@ public class BoggleSolver {
 
         BoggleSolver solver = new BoggleSolver(dictionary);
 
-        // Stopwatch timer = new Stopwatch();
-        // double start, end;
-        // start = timer.elapsedTime();
-        // int iterations = 100;
-        // for (int i = 0; i < iterations; i++) {
-        //     BoggleBoard board = new BoggleBoard(4, 4);
-        //     solver.getAllValidWords(board);
-        // }
-        // end = timer.elapsedTime();
-        // StdOut.printf("%f solves per second\n", 1 / ((end - start) / iterations));
-
-        BoggleBoard board = new BoggleBoard(args[1]);
-        int score = 0;
-        for (String word : solver.getAllValidWords(board)) {
-            StdOut.println(word);
-            score += solver.scoreOf(word);
+        Stopwatch timer = new Stopwatch();
+        double start, end;
+        start = timer.elapsedTime();
+        int iterations = 100;
+        for (int i = 0; i < iterations; i++) {
+            BoggleBoard board = new BoggleBoard(4, 4);
+            solver.getAllValidWords(board);
         }
-        StdOut.println("Score = " + score);
+        end = timer.elapsedTime();
+        StdOut.printf("%f solves per second\n", 1 / ((end - start) / iterations));
+
+        // BoggleBoard board = new BoggleBoard(args[1]);
+        // int score = 0;
+        // for (String word : solver.getAllValidWords(board)) {
+        //     StdOut.println(word);
+        //     score += solver.scoreOf(word);
+        // }
+        // StdOut.println("Score = " + score);
     }
 }
 

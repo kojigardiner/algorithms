@@ -55,12 +55,9 @@ public class MyTrieST<Value> {
 
     private Node root;      // root of trie
     private int n;          // number of keys in trie
-
-    private String lastPrefix;
-    private Node lastPrefixNode;
-
-    private Node currNode;
-    private int currD;
+    
+    private Node currNode;  // current node to search from
+    private int currD;      // current character index in search string
 
     // R-way trie node
     private static class Node {
@@ -74,7 +71,7 @@ public class MyTrieST<Value> {
     public MyTrieST() {
     }
 
-    // Resets the current node to the root
+    // Resets the current search node and character index
     public void reset() {
         currNode = root;
         currD = 0;
@@ -90,7 +87,7 @@ public class MyTrieST<Value> {
      */
     public Object get(String key) {
         if (key == null) throw new IllegalArgumentException("argument to get() is null");
-        Node x = get(root, key, 0);
+        Node x = get(currNode, key, currD);
         if (x == null) return null;
         return x.val;
     }
@@ -190,23 +187,13 @@ public class MyTrieST<Value> {
         Node x = currNode;
         int d = currD;
 
-        // if (lastPrefixNode != null && prefix.substring(0, prefix.length() - 1).equals(lastPrefix)) {
-        //     d = lastPrefix.length();
-        //     x = lastPrefixNode;
-        // }
-
         for (; d < prefix.length(); d++) {
             x = x.next[prefix.charAt(d) - 'A'];
             if (x == null) {
-                // lastPrefixNode = null;
-                currNode = root;
-                currD = 0;
+                reset();
                 return false;
             }
         }
-
-        lastPrefix = prefix;
-        lastPrefixNode = x;
 
         currNode = x;
         currD = d;

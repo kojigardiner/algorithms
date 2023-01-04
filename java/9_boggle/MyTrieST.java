@@ -4,8 +4,8 @@
  *  Dependencies: StdIn.java
  *  Data files:   https://algs4.cs.princeton.edu/52trie/shellsST.txt
  *
- *  A string symbol table for extended ASCII strings, implemented
- *  using a 256-way trie.
+ *  A string symbol table for alphabet strings, implemented
+ *  using a 26-way trie.
  *
  *  % java MyTrieST < shellsST.txt
  *  by 4
@@ -80,11 +80,11 @@ public class MyTrieST<Value> {
      * and {@code null} if the key is not in the symbol table
      * @throws IllegalArgumentException if {@code key} is {@code null}
      */
-    public Value get(String key) {
+    public Object get(String key) {
         if (key == null) throw new IllegalArgumentException("argument to get() is null");
         Node x = get(root, key, 0);
         if (x == null) return null;
-        return (Value) x.val;
+        return x.val;
     }
 
     /**

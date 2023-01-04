@@ -149,7 +149,7 @@ void compute_dfa(char *pattern, int **dfa) {
     }
     // update x once we are past the first character of the pattern
     if (j > 0) {
-      x = dfa[(int)pattern[j]][x];
+      x = dfa[(uint8_t)pattern[j]][x];
     }
   }
 
@@ -174,7 +174,7 @@ int substring_search_kmp(char *pattern, char *text) {
   int j = 0;
 
   for (i = 0; i < n; i++) {
-    j = dfa[(int)text[i]][j];
+    j = dfa[(uint8_t)text[i]][j];
     if (j == m) { // halt state
       break;
     }
@@ -222,7 +222,7 @@ int substring_search_boyer_moore(char *pattern, char *text) {
   }
   // Update characters in the pattern
   for (int j = 0; j < m; j++) {
-    right[(int)pattern[j]] = j;
+    right[(uint8_t)pattern[j]] = j;
   }
 
   // Iterate over the text from l to r, and the pattern from r to l
@@ -239,7 +239,7 @@ int substring_search_boyer_moore(char *pattern, char *text) {
       }
       // Mismatched
       if (c != pattern[j]) {
-        int mismatch_idx = right[(int)c];
+        int mismatch_idx = right[(uint8_t)c];
         // Mismatched character is not in the pattern, so shift the text past
         // the pattern and break
         if (mismatch_idx == -1) {

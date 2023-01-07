@@ -62,8 +62,13 @@ void bit_io_write_bit(bit_io_t *b,  bool data) {
   if (b->bits_in_buffer == BITS_PER_BYTE) {
     bit_io_flush(b);
   }
+
+  // Shift to make room for new bit
+  b->buffer <<= 1;
+
+  // Add bit to LSB
   if (data) {
-    b->buffer |= (1 << (BITS_PER_BYTE - b->bits_in_buffer - 1));
+    b->buffer |= 1;
   }
   b->bits_in_buffer++;
   if (b->bits_in_buffer == BITS_PER_BYTE) {
@@ -77,8 +82,9 @@ void bit_io_write_bits(bit_io_t *b, uint8_t data, size_t r) {
     printf("Warning: Data not written. Number of bits must be >0 and <= 8\n");
     return;
   }
-  for (int i = 0; i < r; i++) {
-    bit_io_write_bit(b, ((data & (1 << i)) >> i));
+  // Write MSB first
+  for (int i = r - 1; i >= 0; i--) {
+    bit_io_write_bit(b, (data & (1 << i)) > 0);
   }
 }
 
@@ -87,7 +93,7 @@ void bit_io_write_byte(bit_io_t *b, uint8_t data) {
   bit_io_write_bits(b, data, BITS_PER_BYTE);
 }
 
-// Writes a 4-byte int.
+// Writes a 4-byte int in little-endian order.
 void bit_io_write_int(bit_io_t *b, int data) {
   uint8_t curr_byte;
   for (int i = 0; i < BYTES_PER_INT; i++) {
@@ -105,6 +111,7 @@ bool bit_io_read_bit(bit_io_t *b) {
     bit_io_fill(b);
   }
 
+  // Read MSB first
   bool data = (b->buffer & (1 << (b->bits_in_buffer - 1))) > 0;
   b->bits_in_buffer--;
 
@@ -119,7 +126,8 @@ uint8_t bit_io_read_bits(bit_io_t *b, size_t r) {
   }
 
   uint8_t data = 0;
-  for (int i = 0; i < r; i++) {
+  // Read MSB first
+  for (int i = r - 1; i >= 0; i--) {
     if (bit_io_read_bit(b)) {
       data |= (1 << i);
     }
@@ -133,7 +141,7 @@ uint8_t bit_io_read_byte(bit_io_t *b) {
   return bit_io_read_bits(b, BITS_PER_BYTE);
 }
 
-// Reads and returns a 4-byte int.
+// Reads and returns a 4-byte int assuming little-endian order.
 int bit_io_read_int(bit_io_t *b) {
   int data = 0;
 

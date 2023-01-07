@@ -85,11 +85,19 @@ void test_write_bits() {
   bit_io_t *b = bit_io_open(filename, "w");
   
   // Writes the following:
-  //    0 in 1 bit
-  //    1 in 2 bits
-  //    2 in 3 bits
-  //    3 in 4 bits
-  //    ...
+  //   0 in 1 bit
+  //   1 in 2 bits
+  //   2 in 3 bits
+  //   3 in 4 bits
+  //   ...
+  //
+  // Bits written
+  // 0 01 010 0011 00100 000101 0000110 00000111
+  //
+  // Bytes written
+  // 00101000 11001000 00101000 01100000 [0000]0111 (final 4 zeros padded)
+  // 0x28 0xC8 0x28 0x60 0x07
+
   int r = 0;
   for (uint8_t i = 0; i < 8; i++) {
     r = i + 1;
@@ -99,7 +107,7 @@ void test_write_bits() {
 
   // Read the data we just wrote, using standard C library
   // The pattern below results from the packed bits we wrote above
-  uint8_t expected[] = {0xD2, 0x90, 0xC2, 0x70, 0x00};
+  uint8_t expected[] = {0x28, 0xC8, 0x28, 0x60, 0x07};
   FILE *fp = fopen(filename, "r");
   uint8_t data;
   for (uint8_t i = 0; i < 5; i++) {
@@ -113,7 +121,8 @@ void test_write_bits() {
 void test_read_bits() {
   // Write a packed bit test file
   FILE *fp = fopen(filename, "w");
-  uint8_t expected[] = {0xD2, 0x90, 0xC2, 0x70, 0x00};
+  // Last value is 0x70 here because we do not automatically pack bits on a read
+  uint8_t expected[] = {0x28, 0xC8, 0x28, 0x60, 0x70};
   for (int i = 0; i < 5; i++) {
     fwrite(&expected[i], 1, 1, fp);
   }
@@ -131,8 +140,9 @@ void test_write_bit() {
   // Write data with bit_io
   bit_io_t *b = bit_io_open(filename, "w");
   for (uint8_t i = 0; i < 255; i++) {
-    for (int j = 0; j < 8; j++) {
-      bit_io_write_bit(b, (i & (1 << j)) >> j);
+    // Write MSB first
+    for (int j = 7; j >= 0; j--) {
+      bit_io_write_bit(b, (i & (1 << j)) > 0);
     }
   }
   bit_io_close(b);
@@ -156,7 +166,8 @@ void test_read_bit() {
   bit_io_t *b = bit_io_open(filename, "r");
   for (uint8_t i = min_byte; i < max_byte; i+=byte_step) {
     data = 0;
-    for (int j = 0; j < 8; j++) {
+    // Read MSB first
+    for (int j = 7; j >= 0; j--) {
       data |= (bit_io_read_bit(b) << j);
     }
     TEST_ASSERT_EQUAL(i, data);
@@ -235,13 +246,16 @@ void test_write_interleaved() {
   bit_io_write_int(b, 0xDEADBEEF);
 
   bit_io_close(b);
-
-  // 0110 1111 0101 0110 1101 1111 0111 0111 1110 0111 0111 0101
-  // 6f 56 df 77 e7 75
+  
+  // Bits written
+  // 1 111010 11001110 11101111 10111110 10101101 11011110
+  // Bytes written  (last byte is padded)
+  // 11110101 10011101 11011111 01111101 01011011 [0]1011110
+  // f5 9d df 7d 5b 5e
 
   FILE *fp = fopen(filename, "r");
   uint8_t data;
-  uint8_t expected[] = {0x75, 0xe7, 0x77, 0xdf, 0x56, 0x6f};
+  uint8_t expected[] = {0xf5, 0x9d, 0xdf, 0x7d, 0x5b, 0x5e};
   for (int i = 0; i < 6; i++) {
     TEST_ASSERT_EQUAL(1, fread(&data, 1, 1, fp));
     TEST_ASSERT_EQUAL(expected[i], data);
@@ -252,7 +266,8 @@ void test_write_interleaved() {
 // Reads different bit lengths from a file
 void test_read_interleaved() {
   FILE *fp = fopen(filename, "w");
-  uint8_t expected[] = {0x75, 0xe7, 0x77, 0xdf, 0x56, 0x6f};
+  // last byte shifted from write_interleaved test to account for padding
+  uint8_t expected[] = {0xf5, 0x9d, 0xdf, 0x7d, 0x5b, 0xbc};
   for (int i = 0; i < 6; i++) {
     fwrite(&expected[i], 1, 1, fp);
   }

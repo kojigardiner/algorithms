@@ -7,6 +7,9 @@
 
 #define NELEMS(a) sizeof(a) / sizeof(a[0])
 
+#define BITS_PER_BYTE 8
+#define BYTES_PER_INT 4
+
 // Comparison functions for commmon types. Comparison functions for more
 // complex types must be provided by the client.
 bool less_int(void *v, void *w);

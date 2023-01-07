@@ -4,16 +4,15 @@
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
 #include "bit_io.h"
+#include "../lib/lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define BITS_PER_BYTE 8
-#define BYTES_PER_INT 4
-
 // Private functions
 static void bit_io_flush(bit_io_t *b);
 static void bit_io_fill(bit_io_t *b);
+// static uint8_t reverse_byte(uint8_t byte);
 
 // Bit IO data type
 typedef struct bit_io {
@@ -153,7 +152,7 @@ bool bit_io_eof(bit_io_t *b) {
   if (b->is_read_mode && b->bits_in_buffer == 0) {
     // Check that EOF has been reached AND all bits have been read from the
     // buffer.
-    char c = fgetc(b->fp);
+    int c = fgetc(b->fp);
     if (c == EOF) {
       return true;
     } else {
@@ -184,6 +183,22 @@ static void bit_io_flush(bit_io_t *b) {
     b->buffer = 0;
   }
 }
+
+// // Reverses the bits in a byte
+// static uint8_t reverse_byte(uint8_t byte) {
+//   uint8_t reversed = 0;
+    
+//   reversed |= ((byte & (1 << 0)) << 7);
+//   reversed |= ((byte & (1 << 1)) << 6);
+//   reversed |= ((byte & (1 << 2)) << 5);
+//   reversed |= ((byte & (1 << 3)) << 4);
+//   reversed |= ((byte & (1 << 4)) >> 1);
+//   reversed |= ((byte & (1 << 5)) >> 3);
+//   reversed |= ((byte & (1 << 6)) >> 5);
+//   reversed |= ((byte & (1 << 7)) >> 7);
+
+//   return reversed;
+// }
 
 // Fills the buffer with new data by calling fread. Resets the buffer pointer.
 static void bit_io_fill(bit_io_t *b) {

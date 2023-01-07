@@ -59,3 +59,5 @@ Most implementations below support storage of generic object types, including pr
 | Symbol Graph | 
 | Union Find | 
 | Binary Search | 
+| Bit I/O | 
+| Zip |

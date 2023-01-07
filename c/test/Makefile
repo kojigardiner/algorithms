@@ -6,11 +6,28 @@ UNITY_PATH := ../../../Unity/src
 objects := lib_test bag_test stack_test queue_test uf_test sort_test \
 priority_queue_test symbol_table_test graph_test digraph_test paths_test \
 cycle_test top_sort_test cc_test edge_test weighted_graph_test mst_test \
-shortest_paths_test flow_network_test trie_test substring_search_test regex_test
+shortest_paths_test flow_network_test trie_test substring_search_test \
+regex_test bit_io_test zip_test
 
 all: $(objects)
 	@echo Executing tests
 	$(foreach obj, $(objects), ./$(obj);)
+
+# Zip
+zip_test: lib.o zip_test.o zip.o unity.o bit_io.o
+	@echo Compiling zip_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+zip.o: $(ALGORITHMS_PATH)/zip/zip.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+# Bit IO
+bit_io_test: lib.o bit_io_test.o bit_io.o unity.o
+	@echo Compiling bit_io_test
+	$(CC) $(CFLAGS) $^ -o $@
+
+bit_io.o: $(ALGORITHMS_PATH)/bit_io/bit_io.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 # Regex
 regex_test: lib.o regex_test.o regex.o unity.o stack.o graph.o paths.o bag.o queue.o

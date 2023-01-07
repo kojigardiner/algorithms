@@ -63,7 +63,7 @@ void bit_io_write_bit(bit_io_t *b,  bool data) {
     bit_io_flush(b);
   }
   if (data) {
-    b->buffer |= (1 << b->bits_in_buffer);
+    b->buffer |= (1 << (BITS_PER_BYTE - b->bits_in_buffer - 1));
   }
   b->bits_in_buffer++;
   if (b->bits_in_buffer == BITS_PER_BYTE) {
@@ -105,7 +105,7 @@ bool bit_io_read_bit(bit_io_t *b) {
     bit_io_fill(b);
   }
 
-  bool data = (b->buffer & (1 << (BITS_PER_BYTE - b->bits_in_buffer))) > 0;
+  bool data = (b->buffer & (1 << (b->bits_in_buffer - 1))) > 0;
   b->bits_in_buffer--;
 
   return data;
@@ -175,6 +175,7 @@ void bit_io_close(bit_io_t *b) {
 // buffer content and pointer.
 static void bit_io_flush(bit_io_t *b) {
   if (!b->is_read_mode && b->bits_in_buffer > 0) {
+    // b->buffer = reverse_byte(b->buffer);
     if (fwrite(&b->buffer, 1, 1, b->fp) != 1) {
       printf("Failed to write!\n");
       exit(EXIT_FAILURE);
@@ -189,9 +190,9 @@ static void bit_io_flush(bit_io_t *b) {
 //   uint8_t reversed = 0;
     
 //   reversed |= ((byte & (1 << 0)) << 7);
-//   reversed |= ((byte & (1 << 1)) << 6);
-//   reversed |= ((byte & (1 << 2)) << 5);
-//   reversed |= ((byte & (1 << 3)) << 4);
+//   reversed |= ((byte & (1 << 1)) << 5);
+//   reversed |= ((byte & (1 << 2)) << 3);
+//   reversed |= ((byte & (1 << 3)) << 1);
 //   reversed |= ((byte & (1 << 4)) >> 1);
 //   reversed |= ((byte & (1 << 5)) >> 3);
 //   reversed |= ((byte & (1 << 6)) >> 5);
@@ -210,6 +211,7 @@ static void bit_io_fill(bit_io_t *b) {
       printf("Failed to read!\n");
       exit(EXIT_FAILURE);
     }
+    // b->buffer = reverse_byte(b->buffer);
     b->bits_in_buffer = BITS_PER_BYTE;
   }
 }

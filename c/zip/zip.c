@@ -1,4 +1,56 @@
-// Implementation for a zipping and unzipping a file.
+// Implementation for a zipping and unzipping a file. Includes Run Length
+// Encoding, Huffman compression, and LZW compression.
+// 
+// Run Length Encoding
+// -----------------------------
+// Takes advantage of the fact that certain types of files have long sequences 
+// of consecutive 0s and 1s, and represents those sequences with a single value
+// representing their count. Works best on binary bitmaps (e.g. 0 = black, 1 =
+// white) but is not as efficient for text files, which often lack runs of
+// consecutive bits.
+//
+// Compression:
+// Writes the count of runs of bits that have the same value. By default the
+// count is written out as an 8-bit value, and can therefore encode runs with
+// max length of 255. By convention, the first value written is the number of
+// continuous zeros, followed by the number of continuous ones and so on. In
+// cases where a run exceeds length of 255, 255 is written, then zero, then
+// the remaining run count.
+//
+// Expansion:
+// Reads run counts from the compressed file, and writes the appropriate 
+// sequence of 0s and 1s.
+//
+// Huffman Compression
+// -----------------------------
+// Uses a per-file variable-length encoding to represent frequently seen bit
+// patterns with fewer bits. In this implementation, the file is examined in
+// 8-bit sequences, and a set of prefix-free codes is assigned to each sequence
+// based on its frequency, using a binary trie. The trie is written as a header
+// in the compressed file, which makes huffman compression less valuable for
+// small filesizes, where the trie itself would increase the filesize.
+//
+// Compression:
+// Requires two passes through the input file: first to compute frequencies
+// of each 8-bit sequence and build the encoding trie, and second, to read the 
+// input and convert each 8-bit sequence it its new encoding. 
+// 
+// The trie is built by using a min priority queue initialized with a node for 
+// every 8-bit sequence and its frequency. The two nodes with smallest frequency 
+// are removed and a new node added that has the two as children and a frequency 
+// that is the sum of its children. The process repeats until there is one node 
+// left, the root. This trie is then written to the file, followed by the total
+// number of 8-bit sequences in the original file.
+//
+// The resulting trie is then traversed to build an encoding table, where moving 
+// to a left child in the trie represents adding a '0' to the code, and moving
+// right represents adding a '1' to the code, until a leaf node is reached.
+// 
+// Expansion:
+// Reads the trie and total byte count from the compressed file, then reads
+// successive bits from the file, following the trie from root to leaf node
+// based on the bit value ('0' -> go left, '1' -> go right). The 8-bit sequence
+// corresponding to the leaf node is written to the output file.
 // 
 // Inspired by Algorithms, Fourth Edition (Sedgewick & Wayne).
 
@@ -142,13 +194,7 @@ double filesize_ratio(const char *in_filename, const char *out_filename) {
   return (double)s2.st_size / (double)s1.st_size;
 }
 
-// Run Length Encoding
-// Writes the count of runs of bits that have the same value. By default the
-// count is written out as an 8-bit value, and can therefore encode runs with
-// max length of 255. By convention, the first value written is the number of
-// continuous zeros, followed by the number of continuous ones and so on. In
-// cases where a run exceeds length of 255, 255 is written, then zero, then
-// the remaining run count.
+/* Run Length Encoding */
 
 // Compresses the given input file using RLE and writes it to the given output 
 // file.
@@ -219,7 +265,10 @@ void expand_rle(const char *in_filename, const char *out_filename) {
   bit_io_close(bout);
 }
 
+/* Huffman Compression */
 
+// Compresses the input file using huffman encoding and writes it to the output
+// filename.
 void compress_huffman(const char *in_filename, const char *out_filename) {
   // Create reader/writer bit_io
   bit_io_t *bin = bit_io_open(in_filename, "r");
@@ -239,23 +288,11 @@ void compress_huffman(const char *in_filename, const char *out_filename) {
     total++;
   }
 
-  // for (int i = 0; i < HUFFMAN_RADIX; i++) {
-  //   if (freqs[i] > 0) {
-  //     printf("%d: %d\n", i, freqs[i]);
-  //   }
-  // }
-
   // Build trie
   node_huffman_t *root = build_trie_huffman(freqs);
 
   // Build code table
   char **table = build_code_table_huffman(root);
-
-  // for (int i = 0; i < HUFFMAN_RADIX; i++) {
-  //   if (table[i]) {
-  //     printf("%d: %s\n", i, table[i]);
-  //   }
-  // }
 
   // Write trie
   write_trie_huffman(root, bout);
@@ -297,6 +334,8 @@ void compress_huffman(const char *in_filename, const char *out_filename) {
   bit_io_close(bout);
 }
 
+// Expands the input file that has been encoded using huffman compression, and
+// writes the output to out_filename.
 void expand_huffman(const char *in_filename, const char *out_filename) {
   // Create reader/writer bit_io
   bit_io_t *bin = bit_io_open(in_filename, "r");
@@ -308,10 +347,8 @@ void expand_huffman(const char *in_filename, const char *out_filename) {
   // Read count of characters
   int total = bit_io_read_int(bin);
 
-  // Decode bits with trie
+  // For each character we expect in the file, decode bits with trie
   node_huffman_t *node = root;
-
-  // For each character we expect
   for (int i = 0; i < total; i++) {
     // Read bits until we hit a leaf node
     while (!is_leaf_huffman(node)) {
@@ -355,9 +392,9 @@ bool is_leaf_huffman(node_huffman_t *node) {
 }
 
 // Returns a table indexed by character value, containing bitstrings 
-// representing each character. Traverses the trie rooted at node to do so.
-// The caller is responsible for freeing the memory associated with the returned
-// table.
+// representing each character. Traverses the trie rooted at node to build the
+// table. The caller is responsible for freeing the memory associated with the 
+// returned table.
 char **build_code_table_huffman(node_huffman_t *node) {
   // Create a table of strings, with number of rows defined by the alphabet
   // radix.
@@ -374,6 +411,7 @@ char **build_code_table_huffman(node_huffman_t *node) {
     exit(EXIT_FAILURE);
   }
 
+  // Recursive call to build the table
   build_code_table_huffman_recursive(node, s, table);
   free(s);
 
@@ -396,15 +434,19 @@ void build_code_table_huffman_recursive(node_huffman_t *node, char *s, char **ta
     return;
   }
 
+  // Recur down left and right child links. A new string is allocated for each,
+  // as they will end up becoming separate codes.
   int curr_len = strlen(s);
   
-  char *left_s = calloc(curr_len + 2, sizeof(char));   // +1 for new bit, +1 for null-terminator
+  // +1 for new bit, +1 for null-terminator
+  char *left_s = calloc(curr_len + 2, sizeof(char));
   strcpy(left_s, s);
   left_s[curr_len] = '0';
   build_code_table_huffman_recursive(node->left, left_s, table);
   free(left_s);
 
-  char *right_s = calloc(curr_len + 2, sizeof(char));   // +1 for new bit, +1 for null-terminator
+  // +1 for new bit, +1 for null-terminator
+  char *right_s = calloc(curr_len + 2, sizeof(char));  
   strcpy(right_s, s);
   right_s[curr_len] = '1';
   build_code_table_huffman_recursive(node->right, right_s, table);
@@ -415,7 +457,7 @@ void build_code_table_huffman_recursive(node_huffman_t *node, char *s, char **ta
 void free_code_table_huffman(char **table) {
   for (int i = 0; i < HUFFMAN_RADIX; i++) {
     if (table[i]) {
-      free(table[i]);
+      free(table[i]); // free the bitstring
     }
   }
   free(table);
@@ -435,8 +477,9 @@ node_huffman_t *build_trie_huffman(int *freqs) {
   }
 
   // Iterate over the priority queue, removing the two nodes with the smallest
-  // frequencies and creating a parent node that points to them. Continue
-  // until there is only one node remaining, the root.
+  // frequencies and creating a parent node that points to them and has as its
+  // frequency the sum of its children's. Continue until there is only one node 
+  // remaining, the root.
   while (pq_size(pq) > 1) {
     node_huffman_t *a;
     node_huffman_t *b;
@@ -454,7 +497,7 @@ node_huffman_t *build_trie_huffman(int *freqs) {
   return root;
 }
 
-// Frees memory associated with the huffman trie rooted a node.
+// Recursively frees memory associated with the huffman trie rooted a node.
 void free_trie_huffman(node_huffman_t *node) {
   if (is_leaf_huffman(node)) {
     free(node);
@@ -474,14 +517,15 @@ void free_trie_huffman(node_huffman_t *node) {
 // traversal of the trie, by writing the current node values before visiting
 // the children.
 void write_trie_huffman(node_huffman_t *node, bit_io_t *b) {
+  // Leaf node
   if (is_leaf_huffman(node)) {
     bit_io_write_bit(b, true);
     bit_io_write_byte(b, (uint8_t)node->c);
     return;
   } 
   
+  // Internal node
   bit_io_write_bit(b, false);
-
   write_trie_huffman(node->left, b);
   write_trie_huffman(node->right, b);
 
@@ -491,7 +535,9 @@ void write_trie_huffman(node_huffman_t *node, bit_io_t *b) {
 // Reads a huffman trie from the given bit_io output stream and recursively
 // constructs the trie, returning the root node to the initial caller. A zero
 // bit indicates an internal trie node and a one bit indicates a leaf node, with
-// the following byte representing that node's character.
+// the following byte representing that node's character. Note that the
+// frequencies have no meaning in nodes built from a file-read trie, so they
+// are set arbitrarily to 0.
 node_huffman_t *read_trie_huffman(bit_io_t *b) { 
   // Leaf node
   if (bit_io_read_bit(b)) {
@@ -516,6 +562,8 @@ bool less_node_huffman(void *a, void *b) {
   node_huffman_t *n2 = *(node_huffman_t **)b;
   return (n1->freq < n2->freq);
 }
+
+/* LZW compression */
 
 void compress_lzw(const char *in_filename, const char *out_filename) {
 }

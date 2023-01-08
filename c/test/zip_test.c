@@ -2,7 +2,7 @@
 #include "../zip/zip.h"
 #include <stdlib.h>
 
-static const char *filenames[] = {"../data/abra.txt", "../data/tinyTale.txt", "../data/tale.txt", "../data/q64x96.bin", "../data/4runs.bin"};
+static const char *filenames[] = {"../data/abra.txt", "../data/tinytinyTale.txt", "../data/tinyTale.txt", "../data/medTale.txt", "../data/tale.txt", "../data/q64x96.bin", "../data/4runs.bin"};
 static const char *compressed_filename = "compressed";
 static const char *expanded_filename = "expanded";
 

@@ -95,7 +95,7 @@ void test_write_bits() {
   // 0 01 010 0011 00100 000101 0000110 00000111
   //
   // Bytes written
-  // 00101000 11001000 00101000 01100000 [0000]0111 (final 4 zeros padded)
+  // 00101000 11001000 00101000 01100000 0111[0000] (final 4 zeros padded)
   // 0x28 0xC8 0x28 0x60 0x07
 
   int r = 0;
@@ -107,7 +107,7 @@ void test_write_bits() {
 
   // Read the data we just wrote, using standard C library
   // The pattern below results from the packed bits we wrote above
-  uint8_t expected[] = {0x28, 0xC8, 0x28, 0x60, 0x07};
+  uint8_t expected[] = {0x28, 0xC8, 0x28, 0x60, 0x70};
   FILE *fp = fopen(filename, "r");
   uint8_t data;
   for (uint8_t i = 0; i < 5; i++) {
@@ -250,12 +250,12 @@ void test_write_interleaved() {
   // Bits written
   // 1 111010 11001110 11101111 10111110 10101101 11011110
   // Bytes written  (last byte is padded)
-  // 11110101 10011101 11011111 01111101 01011011 [0]1011110
+  // 11110101 10011101 11011111 01111101 01011011 1011110[0]
   // f5 9d df 7d 5b 5e
 
   FILE *fp = fopen(filename, "r");
   uint8_t data;
-  uint8_t expected[] = {0xf5, 0x9d, 0xdf, 0x7d, 0x5b, 0x5e};
+  uint8_t expected[] = {0xf5, 0x9d, 0xdf, 0x7d, 0x5b, 0xbc};
   for (int i = 0; i < 6; i++) {
     TEST_ASSERT_EQUAL(1, fread(&data, 1, 1, fp));
     TEST_ASSERT_EQUAL(expected[i], data);

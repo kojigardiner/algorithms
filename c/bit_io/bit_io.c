@@ -183,6 +183,9 @@ void bit_io_close(bit_io_t *b) {
 // buffer content and pointer.
 static void bit_io_flush(bit_io_t *b) {
   if (!b->is_read_mode && b->bits_in_buffer > 0) {
+    // Zero-pad LSB
+    b->buffer <<= (BITS_PER_BYTE - b->bits_in_buffer);
+
     // b->buffer = reverse_byte(b->buffer);
     if (fwrite(&b->buffer, 1, 1, b->fp) != 1) {
       printf("Failed to write!\n");

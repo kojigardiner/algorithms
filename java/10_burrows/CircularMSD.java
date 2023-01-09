@@ -83,7 +83,13 @@ public class CircularMSD {
         // compute frequency counts
         int[] count = new int[R + 2];
         for (int i = lo; i <= hi; i++) {
-            int c = a.charAt((idx[i] + d) % a.length());
+            int c;
+            if (d == a.length()) {
+                c = -1;
+            }
+            else {
+                c = a.charAt((idx[i] + d) % a.length());
+            }
             count[c + 2]++;
         }
 
@@ -93,7 +99,13 @@ public class CircularMSD {
 
         // distribute
         for (int i = lo; i <= hi; i++) {
-            int c = a.charAt((idx[i] + d) % a.length());
+            int c;
+            if (d == a.length()) {
+                c = -1;
+            }
+            else {
+                c = a.charAt((idx[i] + d) % a.length());
+            }
             aux[count[c + 1]++] = idx[i];
         }
 
@@ -103,8 +115,9 @@ public class CircularMSD {
 
 
         // recursively sort for each character (excludes sentinel -1)
-        for (int r = 0; r < R; r++)
+        for (int r = 0; r < R; r++) {
             sort(a, lo + count[r], lo + count[r + 1] - 1, d + 1, aux, idx);
+        }
     }
 
 

@@ -28,7 +28,7 @@
 // 8-bit sequences, and a set of prefix-free codes is assigned to each sequence
 // based on its frequency, using a binary trie. The trie is written as a header
 // in the compressed file, which makes huffman compression less valuable for
-// small filesizes, where the trie itself would increase the filesize.
+// small filesizes, where the trie itself could increase the filesize.
 //
 // Compression:
 // Requires two passes through the input file: first to compute frequencies
@@ -57,6 +57,7 @@
 #include "../lib/lib.h"
 #include "../bit_io/bit_io.h"
 #include "../priority_queue/priority_queue.h"
+#include "../symbol_table/symbol_table.h"
 #include "zip.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,8 +66,13 @@
 
 #define RLE_BITS 8  // number of bits used to encode run length
 #define RLE_MAX_RUN_LEN ((1 << RLE_BITS) - 1) // max run length
+
 #define HUFFMAN_MAX_CODE_LEN 256  // max code length (255 + null-terminator)
 #define HUFFMAN_RADIX 256         // extended ASCII alphabet
+
+#define LZW_CODE_WIDTH 12         // bits for codes
+#define LZW_MAX_CODES ((1 << LZW_CODE_WIDTH) - 1)     // max codes (4095)
+#define LZW_EOF_CODE TRIE_RWAY_RADIX   // EOF code
 
 // Private functions
 double filesize_ratio(const char *in_filename, const char *out_filename);
@@ -105,6 +111,12 @@ bool less_node_huffman(void *a, void *b);
 // LZW helper functions
 void compress_lzw(const char *in_filename, const char *out_filename);
 void expand_lzw(const char *in_filename, const char *out_filename);
+
+void write_code_lzw(bit_io_t *b, int code);
+int read_code_lzw(bit_io_t *b);
+
+st_t *reset_compress_table_lzw(st_t *st);
+char **reset_expand_table_lzw(char **table);
 
 // Compresses a file with the given compression method. Returns the compression
 // ratio achieved.
@@ -566,7 +578,285 @@ bool less_node_huffman(void *a, void *b) {
 /* LZW compression */
 
 void compress_lzw(const char *in_filename, const char *out_filename) {
+  // Create reader/writer
+  bit_io_t *bin = bit_io_open(in_filename, "r");
+  bit_io_t *bout = bit_io_open(out_filename, "w");
+
+  // Setup a symbol table with compression codes
+  st_t *st = reset_compress_table_lzw(NULL);
+
+  // Keep track of used codes. EOF is TRIE_RWAY_RADIX, so one beyond that is 
+  // where the rest of our codes start.
+  int code_counter = LZW_EOF_CODE + 1;
+
+  // Read the entire file into memory as a string
+  struct stat stat1;
+  stat(in_filename, &stat1);
+  char *full_file = calloc(stat1.st_size + 1, sizeof(char)); // add 1 for final null-terminator
+  if (!full_file) {
+    perror("Failed to calloc\n");
+    exit(EXIT_FAILURE);
+  }
+  int count = 0;
+  while (!bit_io_eof(bin)) {
+    uint8_t byte = bit_io_read_byte(bin);
+    full_file[count] = byte;
+    count++;
+  }
+  
+  // Iterate over file contents while there are still unscanned bytes
+
+  int keylen = 0;
+  for (int position = 0; position < stat1.st_size; position += keylen) {
+    if (code_counter == LZW_MAX_CODES) {
+      // printf("Maximum LZW codes allocated!\n");
+      // Reset symbol table and counter
+      st = reset_compress_table_lzw(st);
+      code_counter = LZW_EOF_CODE + 1;
+    }
+
+    // Find the longest prefix of the unscanned file that exists in the symbol
+    // table. At the very least, we should find one character.
+    // NOTE: because binary files may have arbitrarily placed null-bytes, this
+    // method will only find prefixes up-to such null-bytes, due to C-string
+    // processing.
+    char *key;
+    int code;
+
+    // Special case if current position is a null byte
+    if (full_file[position] == '\0') {
+      write_code_lzw(bout, 0);
+      keylen = 1;
+      continue;
+    }
+
+    // Special case if there is only one char remaining, skip the prefix check
+    if (strlen(&full_file[position]) == 1) {
+      key = strdup(&full_file[position]);
+      if (!key) {
+        perror("Failed to strdup\n");
+        exit(EXIT_FAILURE);
+      }
+    } else if (!st_longest_prefix_of(st, &full_file[position], &key)) {
+      printf("Failed to find any prefix in symbol table!\n");
+      exit(EXIT_FAILURE);
+    }
+
+    // Get the code for that prefix key
+    if (!st_get(st, &key, &code)) {
+      printf("Failed to find %s key in symbol table!\n", key);
+    }
+
+    // Write the code
+    write_code_lzw(bout, code);
+
+    // Move the position pointer
+    keylen = strlen(key);
+
+    // Add a new code to the symbol table if we have more codes available and
+    // the lookahead character is in range and the lookahead isn't a null byte
+    int lookahead = position + keylen;
+    if (code_counter < LZW_MAX_CODES && lookahead < stat1.st_size && full_file[lookahead] != '\0') {
+      // Create a new key and add the next character to it
+      char *new_key = calloc(keylen + 1, sizeof(char));
+      if (!new_key) {
+        perror("Failed to calloc\n");
+        exit(EXIT_FAILURE);
+      }
+      strcpy(new_key, key);
+      new_key[keylen] = full_file[lookahead];
+
+      // Add the new key and increment the code count
+      st_put(st, &new_key, &code_counter);
+      code_counter++;
+
+      free(new_key);
+    }
+
+    free(key);
+  }
+
+  write_code_lzw(bout, LZW_EOF_CODE);
+
+  // Clean up
+  st_free(st);
+  free(full_file);
+  bit_io_close(bin);
+  bit_io_close(bout);
 }
 
 void expand_lzw(const char *in_filename, const char *out_filename) {
+  // Create reader/write
+  bit_io_t *bin = bit_io_open(in_filename, "r");
+  bit_io_t *bout = bit_io_open(out_filename, "w");
+
+  // Set up a table indexed by LZW code that provides the associated character
+  // byte string.
+  char **table = reset_expand_table_lzw(NULL);
+
+  // Keep track of used codes. EOF is TRIE_RWAY_RADIX, so one beyond that is 
+  // where the rest of our codes start.
+  int code_counter = LZW_EOF_CODE + 1;
+
+  // Allocate space for two max code strings
+  char *curr = calloc(LZW_MAX_CODES + 1, sizeof(unsigned char));
+  char *next = calloc(LZW_MAX_CODES + 1, sizeof(unsigned char));
+
+  // Process the first character
+  int code = read_code_lzw(bin);
+  strcpy(curr, table[code]);
+  
+  // Process the rest of the file
+  while (true) {
+    if (code_counter == LZW_MAX_CODES) {
+      // printf("Expanded max number of codes!\n");
+      table = reset_expand_table_lzw(table);
+      code_counter = LZW_EOF_CODE + 1;
+    }
+
+    // Write all bytes of the current string
+    
+    // Special case where we write a null byte
+    if (strlen(curr) == 0) {
+      bit_io_write_byte(bout, 0);
+    } else {
+      for (int i = 0; i < strlen(curr); i++) {
+        bit_io_write_byte(bout, curr[i]);
+      }
+    }
+
+    // Read the next code
+    code = read_code_lzw(bin);
+    if (code == LZW_EOF_CODE) {
+      break;
+    }
+
+    // Special case where code is 0, set string to empty and continue
+    if (code == 0) {
+      strcpy(curr, "");
+      continue;
+    }
+    
+    // Special case where we don't yet have the current code in our table, so
+    // we have to create it
+    if (!table[code]) {
+      char *new_codestring = calloc(strlen(curr) + 2, sizeof(char));
+      if (!new_codestring) {
+        perror("Failed to calloc\n");
+        exit(EXIT_FAILURE);
+      }
+      strcpy(new_codestring, curr);
+
+      // Add the first letter of the current string to the new codestring
+      new_codestring[strlen(curr)] = curr[0];
+      table[code_counter++] = new_codestring;
+      strcpy(next, table[code]);
+
+    // If we do have the code in our table, update the next string with it
+    } else {
+      strcpy(next, table[code]);
+
+      // Lookahead in next, and add a new code to our table if we have space
+      // in the table and the current string isn't empty.
+      if (code_counter < LZW_MAX_CODES && strlen(curr) > 0) {
+        char *new_codestring = calloc(strlen(curr) + 2, sizeof(char));
+        if (!new_codestring) {
+          perror("Failed to calloc\n");
+          exit(EXIT_FAILURE);
+        }
+        strcpy(new_codestring, curr);
+
+        // Add the first letter of the next string to the new codestring
+        new_codestring[strlen(curr)] = next[0];
+        table[code_counter++] = new_codestring;
+      }
+    }
+  
+    // Replace contents of curr with next so it gets written out in the next
+    // iteration.
+    strcpy(curr, next);
+  }
+
+  // Cleanup
+  free(next);
+  free(curr);
+
+  for (int i = 0; i < LZW_MAX_CODES; i++) {
+    if (table[i]) {
+      free(table[i]);
+    }
+  }
+  free(table);
+
+  bit_io_close(bin);
+  bit_io_close(bout);
+}
+
+// Writes the bits of an LZW code to the file associated with b.
+void write_code_lzw(bit_io_t *b, int code) {
+  // Write MSB first
+  for (int i = LZW_CODE_WIDTH - 1; i >= 0; i--) {
+    bit_io_write_bit(b, (code & (1 << i)) > 0);
+  }
+}
+
+// Reads the bits of an LZW code to the file associated with b.
+int read_code_lzw(bit_io_t *b) {
+  int code = 0;
+  // Read MSB first
+  for (int i = LZW_CODE_WIDTH - 1; i >= 0; i--) {
+    code <<= 1;
+    code |= bit_io_read_bit(b);
+  }
+  return code;
+}
+
+// Resets and returns a pointer to a symbol table for LZW compression. Pass
+// in a pointer to a previous symbol table to be replaced, or NULL if this is
+// the first call.
+st_t *reset_compress_table_lzw(st_t *old_st) {
+  if (old_st) {
+    st_free(old_st);
+  }
+
+  // Create symbol table (trie) for mapping strings (byte sequences) to codes
+  st_t *st = st_init(sizeof(char *), sizeof(int), compare_str, TRIE_RWAY);
+
+  // Initialize symbol table with single byte strings = ASCII value code
+  for (int i = 0; i < TRIE_RWAY_RADIX; i++) {
+    char *s = calloc(2, sizeof(char));
+    s[0] = (unsigned char)i;
+    st_put(st, &s, &i);
+    free(s);
+  }
+
+  return st;
+}
+
+// Resets and returns a pointer to a table for LZW expansion. Pass
+// in a pointer to a previous table to be replaced, or NULL if this is
+// the first call.
+char **reset_expand_table_lzw(char **old_table) {
+  // Free the entries > TRIE_RWAY_RADIX for an old table
+  if (old_table) {
+    for (int i = TRIE_RWAY_RADIX; i < LZW_MAX_CODES; i++) {
+      if (old_table[i]) {
+        free(old_table[i]);
+        old_table[i] = NULL;
+      }
+    }
+    return old_table;
+  }
+
+  // Create table of codewords
+  char **table = calloc(LZW_MAX_CODES, sizeof(char *));
+  
+  // Allocate single character strings for each codeword
+  for (int i = 0; i < TRIE_RWAY_RADIX; i++) {
+    char *s = calloc(2, sizeof(char));
+    s[0] = (unsigned char)i;
+    table[i] = s;
+  }
+
+  return table;
 }

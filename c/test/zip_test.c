@@ -2,7 +2,7 @@
 #include "../zip/zip.h"
 #include <stdlib.h>
 
-static const char *filenames[] = {"../data/abra.txt", "../data/tinytinyTale.txt", "../data/tinyTale.txt", "../data/medTale.txt", "../data/tale.txt", "../data/q64x96.bin", "../data/4runs.bin"};
+static const char *filenames[] = {"../data/abra.txt", "../data/abraLZW.txt", "../data/ababLZW.txt", "../data/4runs.bin", "../data/q64x96.bin", "../data/tinytinyTale.txt", "../data/tinyTale.txt", "../data/medTale.txt", "../data/tale.txt"};
 static const char *compressed_filename = "compressed";
 static const char *expanded_filename = "expanded";
 
@@ -44,7 +44,7 @@ int main() {
   RUN_TEST(test_verify_false);
   for (int i = 0; i < NELEMS(filenames); i++) {
     filename = filenames[i];
-    for (int j = 0; j < 2; j++) {//NELEMS(types); j++) {
+    for (int j = 0; j < NELEMS(types); j++) {
       type = types[j];
       type_name = type_names[j];
       RUN_TEST(test_zip);

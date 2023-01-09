@@ -14,7 +14,7 @@ all: $(objects)
 	$(foreach obj, $(objects), ./$(obj);)
 
 # Zip
-zip_test: lib.o zip_test.o zip.o unity.o bit_io.o priority_queue.o
+zip_test: lib.o zip_test.o zip.o unity.o bit_io.o priority_queue.o symbol_table.o stack.o queue.o
 	@echo Compiling zip_test
 	$(CC) $(CFLAGS) $^ -o $@
 

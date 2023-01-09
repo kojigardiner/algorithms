@@ -38,30 +38,8 @@ public class BurrowsWheeler {
         for (int i = 0; i < len; i++) {
             BinaryStdOut.write(t[i]);
         }
-    }
 
-    // Returns a sorted copy of the given character array. Uses key-indexed
-    // counting.
-    private static char[] sortChars(char[] t) {
-        int len = t.length;
-        char[] tSorted = new char[len];
-        int[] counts = new int[R + 1];
-
-        // Count frequency of each char
-        for (int i = 0; i < len; i++) {
-            counts[t[i] + 1]++;
-        }
-        // Calculate cumulates
-        for (int i = 0; i < R; i++) {
-            counts[i + 1] += counts[i];
-        }
-        // Sort
-        for (int i = 0; i < len; i++) {
-            tSorted[counts[t[i]]] = t[i];
-            counts[t[i]]++;
-        }
-
-        return tSorted;
+        BinaryStdOut.close();
     }
 
     // apply Burrows-Wheeler inverse transform,
@@ -118,6 +96,8 @@ public class BurrowsWheeler {
             BinaryStdOut.write(tSorted[idx]);
             idx = next[idx];
         }
+
+        BinaryStdOut.close();
     }
 
     private static void printUsage() {
@@ -140,6 +120,5 @@ public class BurrowsWheeler {
         else {
             printUsage();
         }
-        BinaryStdOut.close();
     }
 }

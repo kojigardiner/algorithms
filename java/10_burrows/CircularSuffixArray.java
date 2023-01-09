@@ -8,8 +8,8 @@ import edu.princeton.cs.algs4.IndexMinPQ;
 import edu.princeton.cs.algs4.StdOut;
 
 public class CircularSuffixArray {
-    private int len;                // string length
-    private int[] sortedIdx;        // sorted suffix indices
+    private final int len;                // string length
+    private final int[] sortedIdx;        // sorted suffix indices
 
     // Private nested class that enables memory-efficient construction of the
     // circular suffix array. This class stores the string length, a reference
@@ -18,9 +18,9 @@ public class CircularSuffixArray {
     // character-by-character comparison between two CircularSuffix objects
     // with different starting indices.
     private class CircularSuffix implements Comparable<CircularSuffix> {
-        private String s;
-        private int len;
-        private int idx;
+        private final String s;
+        private final int len;
+        private final int idx;
 
         public CircularSuffix(String str, int i) {
             s = str;

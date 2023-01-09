@@ -40,6 +40,8 @@ public class MoveToFront {
             // Move to front by setting position to 0.
             seq[c] = 0;
         }
+
+        BinaryStdOut.close();
     }
 
     // apply move-to-front decoding, reading from standard input and writing to standard output
@@ -72,6 +74,8 @@ public class MoveToFront {
                 prev = tmp;
             }
         }
+
+        BinaryStdOut.close();
     }
 
     private static void printUsage() {
@@ -94,6 +98,5 @@ public class MoveToFront {
         else {
             printUsage();
         }
-        BinaryStdOut.close();
     }
 }

@@ -16,11 +16,6 @@ static int types[] = {RLE, HUFFMAN, LZW};
 static char *type_names[] = {"RLE", "HUFFMAN", "LZW"};
 
 int main(int argc, char **argv) {
-  // if (argc < 2) {
-  //   printf("Usage: ./substring_search_client <filename>\n");
-  //   exit(EXIT_FAILURE);
-  // }
-
   clock_t t;
   double ratio;
   for (int i = 0; i < NELEMS(filenames); i++) {
@@ -33,6 +28,12 @@ int main(int argc, char **argv) {
       t = clock();
       expand(compressed_filename, expanded_filename, types[j]);
       printf("%15s %10s %f sec\n", type_names[j], "expand:", (double)(clock() - t) / CLOCKS_PER_SEC);
+
+      if (verify(filenames[i], expanded_filename)) {
+        printf("%15s\n", "Verified!");
+      } else {
+        printf("%15s\n", "Not Verified!");
+      }
     }
   }
 }

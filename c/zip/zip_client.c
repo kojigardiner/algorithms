@@ -1,4 +1,4 @@
-// Test client for zipping files.
+// Test client for zipping files with multiple methods and comparing performance.
 
 #include "zip.h"
 #include "../lib/lib.h"

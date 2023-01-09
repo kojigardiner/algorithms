@@ -199,6 +199,25 @@ void test_st_keys_that_match() {
   }
 }
 
+// Add entries up to TRIE_RWAY_RADIX
+void test_trie_all_radix() {
+  for (int i = 0; i < TRIE_RWAY_RADIX; i++) {
+    char *s = malloc(2 * sizeof(char));
+    if (!s) {
+      perror("Failed to malloc\n");
+      exit(EXIT_FAILURE);
+    }
+    s[0] = (uint8_t)i;
+    s[1] = '\0';
+    st_put(st, &s, &i);
+
+    int j;
+    st_get(st, &s, &j);
+
+    TEST_ASSERT_EQUAL(i, j);
+  }
+}
+
 // Main
 int main() {
   UNITY_BEGIN();
@@ -215,6 +234,7 @@ int main() {
     RUN_TEST(test_st_longest_prefix);
     RUN_TEST(test_st_keys_with_prefix);
     RUN_TEST(test_st_keys_that_match);
+    RUN_TEST(test_trie_all_radix);
   }
   return UNITY_END();
 }

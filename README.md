@@ -59,5 +59,5 @@ Most implementations below support storage of generic object types, including pr
 | Symbol Graph | 
 | Union Find | 
 | Binary Search | 
-| Bit I/O | 
-| Zip |
+| Bit I/O | Interface for reading/writing files with bit-level granularity | Read/Write Bit, Bits, Byte, Int | Wrapper for fread/fwrite | 
+| Zip | Interface for compressing and expanding arbitrary files | Compress, Expand | Run-Length Encoding, Huffman Compression, LZW Compression |

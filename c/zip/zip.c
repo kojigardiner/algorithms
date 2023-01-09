@@ -63,6 +63,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #define RLE_BITS 8  // number of bits used to encode run length
 #define RLE_MAX_RUN_LEN ((1 << RLE_BITS) - 1) // max run length
@@ -598,6 +599,7 @@ void compress_lzw(const char *in_filename, const char *out_filename) {
     exit(EXIT_FAILURE);
   }
   int count = 0;
+  
   while (!bit_io_eof(bin)) {
     uint8_t byte = bit_io_read_byte(bin);
     full_file[count] = byte;
@@ -605,11 +607,9 @@ void compress_lzw(const char *in_filename, const char *out_filename) {
   }
   
   // Iterate over file contents while there are still unscanned bytes
-
   int keylen = 0;
   for (int position = 0; position < stat1.st_size; position += keylen) {
     if (code_counter == LZW_MAX_CODES) {
-      // printf("Maximum LZW codes allocated!\n");
       // Reset symbol table and counter
       st = reset_compress_table_lzw(st);
       code_counter = LZW_EOF_CODE + 1;
@@ -631,7 +631,7 @@ void compress_lzw(const char *in_filename, const char *out_filename) {
     }
 
     // Special case if there is only one char remaining, skip the prefix check
-    if (strlen(&full_file[position]) == 1) {
+    if (full_file[position + 1] == '\0') {
       key = strdup(&full_file[position]);
       if (!key) {
         perror("Failed to strdup\n");

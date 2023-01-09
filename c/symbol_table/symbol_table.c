@@ -1147,8 +1147,8 @@ void trie_collect_pattern(st_t *st, rway_trie_node_t *node, char *s, int d, char
 
 // Recursively searches for the longest prefix
 int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest) {
-  // If we hit a NULL node, return the longest length found
-  if (node == NULL || d == strlen(s)) {
+  // If we hit a NULL node or the end of the string, return the longest length found
+  if (node == NULL || s[d] == '\0') {
     return longest;
   }
 

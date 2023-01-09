@@ -652,7 +652,7 @@ rway_trie_node_t *put_trie(st_t *st, rway_trie_node_t *node, char *key, void *va
     memcpy(node->value, value, st->value_size);
   } else {
     // We need to continue further down the trie
-    node->next[(int)key[d]] = put_trie(st, node->next[(int)key[d]], key, value, d + 1);
+    node->next[(unsigned char)key[d]] = put_trie(st, node->next[(unsigned char)key[d]], key, value, d + 1);
   }
 
   return node;
@@ -782,7 +782,7 @@ bool get_trie(st_t *st, rway_trie_node_t *node, char *key, void *value_found, in
     return true;  
   } else {
     // Otherwise, continue down the trie
-    return get_trie(st, node->next[(int)key[d]], key, value_found, d + 1);
+    return get_trie(st, node->next[(unsigned char)key[d]], key, value_found, d + 1);
   }
 }
 
@@ -797,7 +797,7 @@ rway_trie_node_t *get_trie_node(st_t *st, rway_trie_node_t *node, char *key, int
     return node;  
   } else {
     // Otherwise, continue down the trie
-    return get_trie_node(st, node->next[(int)key[d]], key, d + 1);
+    return get_trie_node(st, node->next[(unsigned char)key[d]], key, d + 1);
   }
 }
 
@@ -1130,7 +1130,7 @@ void trie_collect_pattern(st_t *st, rway_trie_node_t *node, char *s, int d, char
 
     // If not a wildcard, just add the pattern character
     if (pattern[d] != '.') {
-      i = (int)pattern[d];
+      i = (unsigned char)pattern[d];
     }
 
     s_new[strlen(s)] = i; // add the new character
@@ -1158,7 +1158,7 @@ int trie_search(st_t *st, rway_trie_node_t *node, char *s, int d, int longest) {
   }
 
   // Recursive call on next letter of the string
-  return trie_search(st, node->next[(int)s[d]], s, d + 1, longest);
+  return trie_search(st, node->next[(unsigned char)s[d]], s, d + 1, longest);
 }
 
 // Finds the longest key that is a prefix of s and copies a pointer to it to 

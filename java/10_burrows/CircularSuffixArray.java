@@ -8,8 +8,41 @@ import edu.princeton.cs.algs4.IndexMinPQ;
 import edu.princeton.cs.algs4.StdOut;
 
 public class CircularSuffixArray {
-    private int len;        // string length
-    private int[] sortedIdx;      // sorted suffix indices
+    private int len;                // string length
+    private int[] sortedIdx;        // sorted suffix indices
+
+    // Private nested class that enables memory-efficient construction of the
+    // circular suffix array. This class stores the string length, a reference
+    // to the string object, and the index where the suffix starts. It
+    // implements the Comparable interface by performing a
+    // character-by-character comparison between two CircularSuffix objects
+    // with different starting indices.
+    private class CircularSuffix implements Comparable<CircularSuffix> {
+        private String s;
+        private int len;
+        private int idx;
+
+        public CircularSuffix(String str, int i) {
+            s = str;
+            idx = i;
+            len = s.length();
+        }
+
+        public int compareTo(CircularSuffix cs) {
+            int minLen = Math.min(len, cs.len);
+            for (int i = 0; i < minLen; i++) {
+                char c1 = s.charAt((idx + i) % len);
+                char c2 = cs.s.charAt((cs.idx + i) % cs.len);
+                if (c1 < c2) {
+                    return -1;
+                }
+                if (c1 > c2) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+    }
 
     // circular suffix array of s
     public CircularSuffixArray(String s) {
@@ -20,20 +53,13 @@ public class CircularSuffixArray {
         // Cache the length for O(1) lookup
         len = s.length();
 
-        // Create a StringBuilder for O(1) charAt and append
-        StringBuilder sb = new StringBuilder(s);
-
         // Create a priority queue to implicitly sort the suffix strings
-        IndexMinPQ<String> pq = new IndexMinPQ<String>(len);
+        IndexMinPQ<CircularSuffix> pq = new IndexMinPQ<CircularSuffix>(len);
 
         // Insert into the priority queue each shifted version of the string
         // with a new index
-        pq.insert(0, s);
-        for (int i = 1; i < len; i++) {
-            char c = sb.charAt(0);
-            sb.deleteCharAt(0);
-            sb.append(c);
-            pq.insert(i, sb.toString());
+        for (int i = 0; i < len; i++) {
+            pq.insert(i, new CircularSuffix(s, i));
         }
 
         // Initial the sorted index array

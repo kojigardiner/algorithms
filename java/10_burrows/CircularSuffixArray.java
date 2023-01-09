@@ -4,41 +4,13 @@
  *  Description:
  **************************************************************************** */
 
-import edu.princeton.cs.algs4.IndexMinPQ;
 import edu.princeton.cs.algs4.StdOut;
 
 public class CircularSuffixArray {
     private final String str;
     private final int len;                // string length
     private final int[] sortedIdx;        // sorted suffix indices
-
-    // Private nested class that enables memory-efficient construction of the
-    // circular suffix array. This class stores only the index where the suffix
-    // starts. It implements the Comparable interface by performing a
-    // character-by-character comparison between two CircularSuffix objects
-    // with different starting indices.
-    private class CircularSuffix implements Comparable<CircularSuffix> {
-        private final int idx;
-
-        public CircularSuffix(int i) {
-            idx = i;
-        }
-
-        public int compareTo(CircularSuffix cs) {
-            for (int i = 0; i < len; i++) {
-                char c1 = str.charAt((idx + i) % len);
-                char c2 = str.charAt((cs.idx + i) % len);
-                if (c1 < c2) {
-                    return -1;
-                }
-                if (c1 > c2) {
-                    return 1;
-                }
-            }
-            return 0;
-        }
-    }
-
+    
     // circular suffix array of s
     public CircularSuffixArray(String s) {
         if (s == null) {
@@ -49,24 +21,49 @@ public class CircularSuffixArray {
         str = s;
         len = s.length();
 
-        // Create a priority queue to implicitly sort the suffix strings
-        IndexMinPQ<CircularSuffix> pq = new IndexMinPQ<CircularSuffix>(len);
+        sortedIdx = sortCircularSuffixes(s);
+    }
 
-        // Insert into the priority queue each shifted version of the string
-        // with a new index
-        for (int i = 0; i < len; i++) {
-            pq.insert(i, new CircularSuffix(i));
+    // Returns an integer list of sorted circular suffix indices. Uses LSD
+    // string sort with modular indexing.
+    private int[] sortCircularSuffixes(String s) {
+        int w = s.length();
+        int n = s.length();
+        int R = 256;   // extend ASCII alphabet size
+        int[] aux = new int[n];
+
+        // Initialize idx array. Idx array entries will be used to calculate
+        // the circular shift for each string.
+        int[] idx = new int[n];
+        for (int i = 0; i < n; i++) {
+            idx[i] = i;
         }
 
-        // Initial the sorted index array
-        sortedIdx = new int[len];
-        int count = 0;
+        for (int d = w - 1; d >= 0; d--) {
+            // sort by key-indexed counting on dth character
 
-        // Iterate over the priority queue and store the indices
-        for (int i : pq) {
-            sortedIdx[count] = i;
-            count++;
+            // compute frequency counts
+            int[] count = new int[R + 1];
+            for (int i = 0; i < n; i++)
+                // Extract starting index of the current string with idx[i]
+                // then calculate + d modulo w for the circular wrap.
+                count[s.charAt((idx[i] + d) % w) + 1]++;
+
+            // compute cumulates
+            for (int r = 0; r < R; r++)
+                count[r + 1] += count[r];
+
+            // move data
+            for (int i = 0; i < n; i++)
+                // Extract starting index of the current string with idx[i]
+                // then calculate + d modulo w for the circular wrap.
+                aux[count[s.charAt((idx[i] + d) % w)]++] = idx[i];
+
+            // copy back
+            for (int i = 0; i < n; i++)
+                idx[i] = aux[i];
         }
+        return idx;
     }
 
     // length of s

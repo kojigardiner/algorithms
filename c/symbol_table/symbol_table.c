@@ -235,12 +235,12 @@ st_t *st_init(size_t key_size, size_t value_size, int (*compare)(void *, void *)
       }
       break;
     case HASH_TABLE_PROBING:
-      st->hash_table_keys = malloc(st->key_size * st->hash_table_array_size);
+      st->hash_table_keys = calloc(st->hash_table_array_size, st->key_size);
       if (!st->hash_table_keys) {
         perror("Failed to malloc\n");
         exit(EXIT_FAILURE);
       }
-      st->hash_table_values = malloc(st->value_size * st->hash_table_array_size);
+      st->hash_table_values = calloc(st->hash_table_array_size, st->value_size );
       if (!st->hash_table_values) {
         perror("Failed to malloc\n");
         exit(EXIT_FAILURE);
@@ -322,17 +322,20 @@ void resize_hash_probing(st_t *st, int new_size) {
   st_t *tmp_st = st_init(st->key_size, st->value_size, st->compare, st->type);
   
   // Manually resize the arrays to the new size we need
-  tmp_st->hash_table_keys = realloc(tmp_st->hash_table_keys, new_size * st->key_size);
+  free(tmp_st->hash_table_keys);
+  tmp_st->hash_table_keys = calloc(new_size, st->key_size);
   if (!tmp_st->hash_table_keys) {
     perror("Failed to realloc\n");
     exit(EXIT_FAILURE);
   }
-  tmp_st->hash_table_values = realloc(tmp_st->hash_table_values, new_size * st->value_size);
+  free(tmp_st->hash_table_values);
+  tmp_st->hash_table_values = calloc(new_size, st->value_size);
   if (!tmp_st->hash_table_values) {
     perror("Failed to realloc\n");
     exit(EXIT_FAILURE);
   }
-  tmp_st->hash_table_used = realloc(tmp_st->hash_table_used, new_size * sizeof(bool));
+  free(tmp_st->hash_table_used);
+  tmp_st->hash_table_used = calloc(new_size, sizeof(bool));
   if (!tmp_st->hash_table_used) {
     perror("Failed to realloc\n");
     exit(EXIT_FAILURE);
@@ -352,18 +355,24 @@ void resize_hash_probing(st_t *st, int new_size) {
     exit(EXIT_FAILURE);
   }
 
-  while (st_iter_has_next(st)) {
+    while (st_iter_has_next(st)) {
     st_iter_next(st, key);
-    st_get(st, key, value);
+    get_hash(st, key, value);
     // Put key/value pairs into the new table
     put_hash(tmp_st, key, value);
   }
 
   // Copy over the pointers to the keys, values, used arrays, and other elements
   st->hash_table_array_size = tmp_st->hash_table_array_size;
-  st->hash_table_entries = tmp_st->hash_table_entries;
+    st->hash_table_entries = tmp_st->hash_table_entries;
+  
+  free(st->hash_table_keys);
   st->hash_table_keys = tmp_st->hash_table_keys;
+
+  free(st->hash_table_values);
   st->hash_table_values = tmp_st->hash_table_values;
+
+  free(st->hash_table_used);
   st->hash_table_used = tmp_st->hash_table_used;
 
   // Free the temp symbol table struct
@@ -702,6 +711,7 @@ bool put_hash(st_t *st, void *key, void *value) {
   memcpy(st->hash_table_values + idx * st->value_size, value, st->value_size);
   st->hash_table_used[idx] = true;
   st->hash_table_entries++;
+  printf("+p+%d", idx);
   return true;
 }
 
@@ -826,7 +836,7 @@ bool get_hash(st_t *st, void *key, void *value_found) {
   // Iterate over the hash table entries looking for a matching key
   for (idx = hash_compute(st, key) % st->hash_table_array_size;
       st->hash_table_used[idx];
-      idx = (idx + 1) % st->hash_table_entries) {
+      idx = (idx + 1) % st->hash_table_array_size) {
     // Check the key
     void *curr_key = st->hash_table_keys + idx * st->key_size;
     if (st->compare(curr_key, key) == 0) {
@@ -976,10 +986,6 @@ bool st_iter_init(st_t *st) {
       break;
     case HASH_TABLE_PROBING:
       st->curr_hash_iter_idx = 0;
-      // Set idx to first non-empty index
-      while (st->hash_table_entries > 0 && !st->hash_table_used[st->curr_hash_iter_idx]) {
-        st->curr_hash_iter_idx++;
-      }
       st->curr_hash_iter_count = 0;
       break;
     default:
@@ -1057,14 +1063,13 @@ void st_iter_next(st_t *st, void *key) {
       st->curr_hash_iter_count++;
       break;
     case HASH_TABLE_PROBING:
-      memcpy(key, st->hash_table_keys + st->curr_hash_iter_idx * st->key_size, st->key_size);
-      st->curr_hash_iter_count++;
-      st->curr_hash_iter_idx++;
-
-      // Find the next non-empty index
+      // We're at an empty index, so find the next non-empty index
       while (!st->hash_table_used[st->curr_hash_iter_idx]) {
         st->curr_hash_iter_idx = (st->curr_hash_iter_idx + 1) % st->hash_table_array_size;
       }
+      memcpy(key, st->hash_table_keys + st->curr_hash_iter_idx * st->key_size, st->key_size);
+      st->curr_hash_iter_count++;
+      st->curr_hash_iter_idx++;
       break;
     default:
       printf("Unrecognized type\n");

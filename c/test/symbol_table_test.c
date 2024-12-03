@@ -6,6 +6,8 @@
 static char *orig_str = "thequickbrownfoxjumpsoverthelazydog";
 static int counts[] = {1,1,1,1,3,1,1,2,1,1,1,1,1,1,4,1,1,2,1,2,2,1,1,1,1,1};
 static int alphabet_len = (int)('z' - 'a' + 1);
+static int large_size = 3000;
+
 st_t *st;
 int st_type;
 int st_types[] = {BST, RED_BLACK_BST, SEQUENTIAL_SEARCH, HASH_TABLE_CHAINING, HASH_TABLE_PROBING};
@@ -67,6 +69,27 @@ void test_st_get() {
     TEST_ASSERT_EQUAL((int)i, ascii);
     TEST_ASSERT_TRUE(st_contains(st, &i));
   }
+}
+
+// Check values inserted into the symbol table with a large number of entires.
+void test_st_get_large() {
+  st_t *st_large = st_init(sizeof(int), sizeof(int), compare_int, st_type);
+
+  int key;
+  int val;
+  for (int i = 0; i < large_size; i++)
+  {
+    key = i;
+    val = large_size - i;
+    st_put(st_large, &key, &val);
+  }
+
+  for (int i = 0; i < large_size; i++) {
+    TEST_ASSERT_TRUE(st_get(st_large, &i, &val));
+    TEST_ASSERT_EQUAL(val, large_size - i);
+    TEST_ASSERT_TRUE(st_contains(st_large, &i));
+  }
+  st_free(st_large);
 }
 
 // Check get with a missing key
@@ -136,6 +159,7 @@ int main() {
     RUN_TEST(test_st_put);
     RUN_TEST(test_st_put_null);
     RUN_TEST(test_st_get);
+    RUN_TEST(test_st_get_large);
     RUN_TEST(test_st_get_missing);
     RUN_TEST(test_st_count);
     RUN_TEST(test_st_iter_empty);
